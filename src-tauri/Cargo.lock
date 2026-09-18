@@ -3555,7 +3555,7 @@ dependencies = [
 
 [[package]]
 name = "soundboard-tauri"
-version = "1.0.18"
+version = "1.0.19"
 dependencies = [
  "base64 0.23.1",
  "cpal",
