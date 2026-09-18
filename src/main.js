@@ -46,6 +46,10 @@ window.toggleHideVisualizer = function(hide) {
     document.querySelector('.visualizer-wrap').style.display = hide ? 'none' : 'block';
 };
 
+window.toggleStopOnReclick = function(stop) {
+    localStorage.setItem('stopOnReclick', stop ? '1' : '0');
+};
+
 window.toggleHideMeta = function(hide) {
     localStorage.setItem('hideMeta', hide ? '1' : '0');
     document.querySelector('.header-meta').style.display = hide ? 'none' : 'flex';
@@ -137,6 +141,9 @@ function restoreCustomizations() {
     const hideMeta = localStorage.getItem('hideMeta') === '1';
     document.getElementById('hideMetaCheckbox').checked = hideMeta;
     window.toggleHideMeta(hideMeta);
+
+    const stopOnReclick = localStorage.getItem('stopOnReclick') === '1';
+    if(document.getElementById('stopOnReclickCheckbox')) document.getElementById('stopOnReclickCheckbox').checked = stopOnReclick;
 
     updateHeaderDisplay();
 }
@@ -434,7 +441,8 @@ let editingId = null;
 
 async function playSound(soundId) {
   try {
-    await invoke('play_sound', { id: soundId });
+    const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
+    await invoke('play_sound', { id: soundId, stopOnReclick });
     const btn = document.querySelector(`[data-sound-id="${soundId}"]`);
     if (btn) {
       btn.classList.add('playing');

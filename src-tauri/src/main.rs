@@ -123,12 +123,12 @@ fn delete_sound(id: String, state: State<'_, AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn play_sound(id: String, state: State<'_, AppState>) -> Result<(), String> {
+fn play_sound(id: String, stop_on_reclick: bool, state: State<'_, AppState>) -> Result<(), String> {
     let store = state.store.lock().unwrap();
     let sounds = store.load_sounds();
     if let Some(sound) = sounds.iter().find(|s| s.id == id) {
         let path = store.get_sound_path(&sound.filename);
-        audio::play_sound(id, path, sound.volume)?;
+        audio::play_sound(id, path, sound.volume, stop_on_reclick)?;
     }
     Ok(())
 }
