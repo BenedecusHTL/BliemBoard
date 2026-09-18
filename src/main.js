@@ -189,7 +189,15 @@ function ensureAudioCtx() {
 async function playSound(soundId) {
   try {
     const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
+    const isPlaying = activeSources.has(soundId);
+    
     await invoke('play_sound', { id: soundId, stopOnReclick });
+
+    if (stopOnReclick && isPlaying) {
+      // The Rust backend stopped the sound. We just need to stop the visualizer.
+      stopSoundAnalysis(soundId);
+      return;
+    }
     
     // Note: The '.playing' class and duration logic is now handled precisely 
     // inside startSoundAnalysis once we decode the audio to find its true length!
