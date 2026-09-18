@@ -184,6 +184,36 @@ fn open_url(url: String) {
 }
 
 #[tauri::command]
+async fn download_and_install_update(url: String, app: tauri::AppHandle) -> Result<(), String> {
+    let temp_dir = std::env::temp_dir();
+    let installer_path = temp_dir.join("BliemBoard_Update.msi");
+    
+    // Download using curl (built into Windows)
+    let status = std::process::Command::new("curl")
+        .args(["-L", "-o", installer_path.to_str().unwrap(), &url])
+        .status()
+        .map_err(|e| e.to_string())?;
+        
+    if !status.success() {
+        return Err("Download failed".into());
+    }
+    
+    // Hidden powershell script: waits 2 seconds, kills app, installs passively
+    let script = format!(
+        "Start-Sleep -Seconds 2; Stop-Process -Name 'soundboard-tauri' -Force -ErrorAction SilentlyContinue; Start-Process 'msiexec.exe' -ArgumentList '/i', '\"{}\"', '/passive' -Wait",
+        installer_path.display()
+    );
+    
+    std::process::Command::new("powershell")
+        .args(["-WindowStyle", "Hidden", "-Command", &script])
+        .spawn()
+        .map_err(|e| e.to_string())?;
+        
+    app.exit(0);
+    Ok(())
+}
+
+#[tauri::command]
 fn generate_ascii_art(text: String) -> String {
     use figlet_rs::FIGlet;
     let font_str = include_str!("dos_rebel.flf");
@@ -432,6 +462,7 @@ fn main() {
             read_file_bytes,
             trim_sound,
             open_url,
+            download_and_install_update,
             set_volume,
             get_output_devices,
             get_input_devices,

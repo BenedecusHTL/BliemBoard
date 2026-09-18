@@ -1398,8 +1398,23 @@ async function checkForUpdates() {
       if (updateBadge) {
         updateBadge.textContent = 'Install new version ' + latestVersion;
         updateBadge.style.display = 'inline-block';
+        
+        const msiAsset = data.assets && data.assets.find(a => a.name.endsWith('.msi'));
+        const downloadUrl = msiAsset ? msiAsset.browser_download_url : data.html_url;
+
         updateBadge.onclick = async () => {
-          await invoke('open_url', { url: data.html_url });
+          if (msiAsset) {
+            updateBadge.textContent = 'Downloading...';
+            updateBadge.style.pointerEvents = 'none';
+            try {
+              await invoke('download_and_install_update', { url: downloadUrl });
+            } catch (err) {
+              console.error(err);
+              updateBadge.textContent = 'Install failed!';
+            }
+          } else {
+            await invoke('open_url', { url: downloadUrl });
+          }
         };
       }
     }
