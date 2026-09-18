@@ -1485,11 +1485,12 @@ function renderAudioApps() {
     card.appendChild(name);
 
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:4px; width:100%;';
+    row.className = 'volume-control';
+    row.style.cssText = 'display:flex; align-items:center; gap:4px; width:100%; margin-top:4px;';
     const slider = document.createElement('input');
     slider.type = 'range'; slider.min = '0'; slider.max = '100';
     slider.value = Math.round(app.volume * 100);
-    slider.style.cssText = 'flex:1; accent-color:var(--accent);';
+    slider.style.cssText = 'flex:1;';
     slider.oninput = () => {
       const vol = parseInt(slider.value) / 100;
       app.volume = vol;
