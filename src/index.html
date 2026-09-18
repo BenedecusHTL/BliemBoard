@@ -657,7 +657,6 @@
 
   <!-- ── CONTROLS ── -->
   <div class="controls">
-    <button class="btn-primary" onclick="addSound()">+ Add Sound</button>
     <button class="btn-danger" onclick="stopAll()">■ Stop All</button>
     <div class="controls-sep"></div>
     <div class="search-container" style="display:flex; flex:1; min-width:100px; max-width: 250px;">
@@ -681,7 +680,7 @@
   <div id="categoryTabs" class="tabs-container"></div>
 
   <!-- ── ADDITIONAL AUDIO ── -->
-  <div id="additionalAudioPanel" style="display:none; border-top: 1px solid var(--border); margin-bottom: 12px; padding-top: 12px;">
+  <div id="additionalAudioPanel" style="display:block; border-top: 1px solid var(--border); margin-bottom: 12px; padding-top: 12px;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
       <span style="font-size:11px; color:var(--text-4); letter-spacing:0.05em; font-weight:600; text-transform:uppercase;">Additional Audio</span>
       <button class="tab-btn" id="addAudioBtn" onclick="openAddAudioModal()" style="padding: 3px 8px; font-size:11px; line-height:1;">

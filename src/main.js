@@ -1456,10 +1456,10 @@ function renderAudioApps() {
   if (!container) return;
   container.innerHTML = '';
   if (_audioApps.length === 0) {
-    panel.style.display = 'none';
+    // panel.style.display = 'none';
     return;
   }
-  panel.style.display = 'block';
+  // panel.style.display = 'block';
   _audioApps.forEach(app => {
     const card = document.createElement('div');
     card.style.cssText = 'position:relative; display:flex; flex-direction:column; align-items:center; width:115px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:10px 8px 8px; gap:6px; cursor:default;';
