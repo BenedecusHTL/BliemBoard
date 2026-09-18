@@ -145,6 +145,15 @@ function restoreCustomizations() {
     const stopOnReclick = localStorage.getItem('stopOnReclick') === '1';
     if(document.getElementById('stopOnReclickCheckbox')) document.getElementById('stopOnReclickCheckbox').checked = stopOnReclick;
 
+    const masterVolume = localStorage.getItem('masterVolume');
+    if (masterVolume !== null) {
+      const volSlider = document.getElementById('volumeSlider');
+      if (volSlider) {
+        volSlider.value = masterVolume;
+        window.setMasterVolume(masterVolume);
+      }
+    }
+
     updateHeaderDisplay();
 }
 
@@ -481,6 +490,7 @@ async function setMasterVolume(value) {
     const volume = parseFloat(value) / 100;
     await invoke('set_volume', { volume });
     document.getElementById('volumeValue').textContent = value + '%';
+    localStorage.setItem('masterVolume', value);
   } catch (error) {
     console.error('Volume error:', error);
   }
