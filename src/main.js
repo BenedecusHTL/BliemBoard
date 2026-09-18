@@ -143,7 +143,7 @@ function restoreCustomizations() {
     window.toggleHideMeta(hideMeta);
 
     const stopOnReclick = localStorage.getItem('stopOnReclick') === '1';
-    if(document.getElementById('stopOnReclickCheckbox')) document.getElementById('stopOnReclickCheckbox').checked = stopOnReclick;
+    if(document.getElementById('stopOnReclickBtn')) document.getElementById('stopOnReclickBtn').checked = stopOnReclick;
 
     const masterVolume = localStorage.getItem('masterVolume');
     if (masterVolume !== null) {
@@ -188,7 +188,7 @@ function ensureAudioCtx() {
 
 async function playSound(soundId) {
   try {
-    const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
+    const stopOnReclick = document.getElementById('stopOnReclickBtn')?.checked || false;
     const isPlaying = activeSources.has(soundId);
     
     await invoke('play_sound', { id: soundId, stopOnReclick });
@@ -246,7 +246,12 @@ async function startSoundAnalysis(soundId) {
 
 function stopSoundAnalysis(soundId) {
   const src = activeSources.get(soundId);
-  if (src) { try { src.stop(); } catch (_) {} activeSources.delete(soundId); }
+  if (src) {
+    try { src.stop(); } catch (_) {}
+    activeSources.delete(soundId);
+    const btn = document.querySelector(`.sound-button[data-id="${soundId}"]`);
+    if (btn) btn.classList.remove('playing');
+  }
 }
 
 let hasShownMicOverlay = localStorage.getItem('micPermissionGranted') === 'true';
@@ -1523,7 +1528,7 @@ function renderAudioApps() {
 
     const row = document.createElement('div');
     row.className = 'volume-control';
-    row.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; margin-top:4px;';
+    row.style.cssText = 'display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; width:100%; margin-top:4px; padding: 4px 0; background: transparent;';
     const slider = document.createElement('input');
     slider.type = 'range'; slider.min = '0'; slider.max = '100';
     slider.value = Math.round(app.volume * 100);
@@ -1609,12 +1614,14 @@ window.refreshAudioSessions = async function() {
   }
 };
 
-window.addAudioApp = function(pid, name, iconBase64, volume) {
-  if (_audioApps.some(a => a.pid === pid)) return;
+window.addAudioApp = function(pid, name, iconBase64) {
+  if (_audioApps.find(a => a.pid === pid)) return;
+  const volume = 1.0;
   _audioApps.push({ pid, name, iconBase64: iconBase64 || null, volume: volume ?? 1.0 });
   saveAudioApps();
   renderAudioApps();
-  invoke('start_app_loopback', { pid, volume: volume ?? 1.0 }).catch(() => {});
+  const vOut = localStorage.getItem('virtualOutput') || null;
+  invoke('start_app_loopback', { pid, volume: volume ?? 1.0, virtualOutput: vOut }).catch(() => {});
 }
 
 window.removeAudioApp = function(pid) {
@@ -1622,12 +1629,22 @@ window.removeAudioApp = function(pid) {
   saveAudioApps();
   renderAudioApps();
   invoke('stop_app_loopback', { pid }).catch(() => {});
-};
+}
+
+window.updateAudioAppVolume = function(pid, volume) {
+  const app = _audioApps.find(a => a.pid === pid);
+  if (app) {
+    app.volume = volume;
+    saveAudioApps();
+    invoke('set_app_volume', { pid, volume }).catch(() => {});
+  }
+}
 
 window.restoreAudioApps = function() {
   renderAudioApps();
+  const vOut = localStorage.getItem('virtualOutput') || null;
   _audioApps.forEach(app => {
-    invoke('start_app_loopback', { pid: app.pid, volume: app.volume }).catch(() => {});
+    invoke('start_app_loopback', { pid: app.pid, volume: app.volume, virtualOutput: vOut }).catch(() => {});
   });
 };
 

@@ -2,10 +2,10 @@ use rodio::source::Source;
 use ringbuf::traits::{Consumer, Producer, Split};
 use ringbuf::HeapRb;
 
-struct LoopbackSource {
-    consumer: ringbuf::HeapCons<f32>,
-    sample_rate: u32,
-    channels: u16,
+pub struct LoopbackSource {
+    pub consumer: ringbuf::HeapCons<f32>,
+    pub sample_rate: u32,
+    pub channels: u16,
 }
 
 impl Iterator for LoopbackSource {
@@ -331,20 +331,10 @@ unsafe fn run_loopback_thread(
     if audio_client.SetEventHandle(ready_event).is_err() { let _ = CloseHandle(ready_event); return; }
     if audio_client.Start().is_err() { let _ = CloseHandle(ready_event); return; }
 
-    let cpal_host = cpal::default_host();
-    let cable_device = if let Some(ref name) = virtual_output_name {
-        cpal_host.output_devices().ok().and_then(|mut d| d.find(|dev| dev.name().unwrap_or_default() == *name))
-    } else {
-        cpal_host.output_devices().ok().and_then(|mut d| d.find(|dev| dev.name().unwrap_or_default().to_lowercase().contains("cable")))
-    };
-
-    let cable_device = match cable_device { Some(d) => d, None => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
-    let (cable_stream, cable_handle) = match OutputStream::try_from_device(&cable_device) { Ok(r) => r, Err(_) => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
-    let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split(); let source = LoopbackSource { consumer: cons, sample_rate, channels };
-    let sink = match Sink::try_new(&cable_handle) { Ok(s) => s, Err(_) => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
-    sink.append(source);
-    sink.detach();
-    let _stream_guard = cable_stream;
+    // We just create the ringbuffer and send it to audio.rs via AUDIO_SENDER.
+    let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split();
+    
+    let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels));
 
     loop {
         if stop_rx.try_recv().is_ok() { break; }
@@ -365,9 +355,12 @@ unsafe fn run_loopback_thread(
                 std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0 * vol).collect()
             } else { vec![0f32; total] };
             let _ = capture_client.ReleaseBuffer(num_frames);
+            
             for s in samples { let _ = prod.try_push(s); }
         }
     }
+
+    let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::RemoveAppLoopback(pid));
     let _ = audio_client.Stop();
     let _ = CloseHandle(ready_event);
 }

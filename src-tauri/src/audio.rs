@@ -62,6 +62,8 @@ pub enum AudioCommand {
     ToggleMute,
     PlayMuteReminder,
     MicDisconnected,
+    AddAppLoopback(u32, ringbuf::HeapCons<f32>, u32, u16),
+    RemoveAppLoopback(u32),
 }
 
 pub static IS_MUTED: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
@@ -95,6 +97,8 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
         let mut mic_local_sink: Option<Sink> = None;
         let mut mic_cable_sink: Option<Sink> = None;
         let mut mic_stream: Option<cpal::Stream> = None;
+
+        let mut app_loopback_sinks: HashMap<u32, Sink> = HashMap::new();
 
         // Initial setup for outputs
         {
@@ -144,6 +148,28 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
 
         for cmd in rx {
             match cmd {
+                AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels) => {
+                    if let Some(h2) = &handle2 {
+                        if let Ok(sink) = Sink::try_new(h2) {
+                            let source = crate::app_audio::LoopbackSource {
+                                consumer: cons,
+                                sample_rate,
+                                channels,
+                            };
+                            sink.append(source);
+                            let currently_muted = is_muted.load(Ordering::Relaxed);
+                            if currently_muted {
+                                sink.set_volume(0.0);
+                            } else {
+                                sink.set_volume(master_volume);
+                            }
+                            app_loopback_sinks.insert(pid, sink);
+                        }
+                    }
+                }
+                AudioCommand::RemoveAppLoopback(pid) => {
+                    app_loopback_sinks.remove(&pid);
+                }
                 AudioCommand::Play(id, path, ind_vol, stop_on_reclick) => { if stop_on_reclick { if let Some(existing) = sinks.get(&id) { let mut is_playing = false; if let Some(l) = &existing.local { if !l.empty() { is_playing = true; } } if let Some(c) = &existing.cable { if !c.empty() { is_playing = true; } } if is_playing { sinks.remove(&id); continue; } } }
                     let mut local_sink = None;
                     if let Some(h1) = &handle1 {
@@ -229,6 +255,13 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                             } else {
                                 c.set_volume(vol * ss.base_vol);
                             }
+                        }
+                    }
+                    for s in app_loopback_sinks.values() {
+                        if currently_muted {
+                            s.set_volume(0.0);
+                        } else {
+                            s.set_volume(vol);
                         }
                     }
                 }
@@ -393,6 +426,20 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                             } else {
                                 c.set_volume(master_volume * ss.base_vol);
                             }
+                        }
+                    }
+                    if let Some(c) = &mic_cable_sink {
+                        if newly_muted {
+                            c.set_volume(0.0);
+                        } else {
+                            c.set_volume(master_volume);
+                        }
+                    }
+                    for s in app_loopback_sinks.values() {
+                        if newly_muted {
+                            s.set_volume(0.0);
+                        } else {
+                            s.set_volume(master_volume);
                         }
                     }
 

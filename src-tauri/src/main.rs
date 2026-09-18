@@ -383,12 +383,7 @@ fn set_app_volume(pid: u32, volume: f32) {
 }
 
 #[tauri::command]
-fn start_app_loopback(pid: u32, volume: f32, state: State<'_, AppState>) {
-    let virtual_output = {
-        // Read VB-Cable name from the audio module's tracked name
-        // We'll pass None and let app_audio auto-detect the cable device
-        None::<String>
-    };
+fn start_app_loopback(pid: u32, volume: f32, virtual_output: Option<String>, _state: State<'_, AppState>) {
     app_audio::start_app_loopback(pid, volume, virtual_output);
 }
 
