@@ -1145,7 +1145,7 @@ window.toggleAutoStart = async function(checked) {
     const c = canvas();
     const w = c.offsetWidth;
     hStart().style.left = (editorStartFrac * 100) + '%';
-    hEnd().style.left   = (editorEndFrac   * 100) + '%';
+    hEnd().style.left = 'unset'; hEnd().style.right = ((1 - editorEndFrac) * 100) + '%';
     dimL().style.width  = (editorStartFrac * 100) + '%';
     dimR().style.width  = ((1 - editorEndFrac) * 100) + '%';
     updateLabels();
@@ -1486,11 +1486,11 @@ function renderAudioApps() {
 
     const row = document.createElement('div');
     row.className = 'volume-control';
-    row.style.cssText = 'display:flex; align-items:center; gap:4px; width:100%; margin-top:4px;';
+    row.style.cssText = 'display:flex; flex-direction:column; align-items:center; gap:4px; width:100%; margin-top:4px;';
     const slider = document.createElement('input');
     slider.type = 'range'; slider.min = '0'; slider.max = '100';
     slider.value = Math.round(app.volume * 100);
-    slider.style.cssText = 'flex:1;';
+    slider.style.cssText = 'width: 100%; max-width: 90px; text-align:center;';
     slider.oninput = () => {
       const vol = parseInt(slider.value) / 100;
       app.volume = vol;
@@ -1499,7 +1499,7 @@ function renderAudioApps() {
     };
     const label = document.createElement('span');
     label.textContent = slider.value + '%';
-    label.style.cssText = 'font-size:10px; color:var(--text-4); min-width:28px; text-align:right;';
+    label.style.cssText = 'font-size:10px; color:var(--text-4); width:100%; text-align:center; margin-top:2px;';
     slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
     row.appendChild(slider);
     row.appendChild(label);
