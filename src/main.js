@@ -1399,8 +1399,18 @@ async function checkForUpdates() {
     if (!currentVersionSpan) return;
     const currentVersion = currentVersionSpan.textContent.trim(); // e.g., 'v1.0.7'
 
-    // Simple string comparison for versions (works for v1.0.7 vs v1.0.8)
-    if (latestVersion && latestVersion !== currentVersion && latestVersion > currentVersion) {
+    // Compare semantic versions properly (e.g. v1.0.10 > v1.0.9)
+    const cmpVersions = (a, b) => {
+      const pa = a.replace('v', '').split('.').map(Number);
+      const pb = b.replace('v', '').split('.').map(Number);
+      for (let i = 0; i < 3; i++) {
+        if ((pa[i] || 0) > (pb[i] || 0)) return 1;
+        if ((pa[i] || 0) < (pb[i] || 0)) return -1;
+      }
+      return 0;
+    };
+
+    if (latestVersion && cmpVersions(latestVersion, currentVersion) > 0) {
       const updateBadge = document.getElementById('updateBadge');
       if (updateBadge) {
         updateBadge.textContent = 'Install new version ' + latestVersion;
