@@ -614,7 +614,66 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// --- CUSTOM RIGHT-CLICK DRAG & DROP ---
 let draggedSoundId = null;
+let rightDragActive = false;
+let rightDragElement = null;
+let rightDragClone = null;
+
+document.addEventListener('mousemove', (e) => {
+  if (rightDragActive && rightDragClone) {
+    rightDragClone.style.left = (e.clientX - rightDragClone.offsetWidth/2) + 'px';
+    rightDragClone.style.top = (e.clientY - rightDragClone.offsetHeight/2) + 'px';
+    
+    document.querySelectorAll('.sound-button').forEach(b => b.classList.remove('drag-over'));
+    
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+      const targetBtn = target.closest('.sound-button');
+      if (targetBtn && targetBtn !== rightDragElement) {
+        targetBtn.classList.add('drag-over');
+      }
+    }
+  }
+});
+
+document.addEventListener('mouseup', async (e) => {
+  if (e.button === 2 && rightDragActive) {
+    rightDragActive = false;
+    if (rightDragClone) {
+      rightDragClone.remove();
+      rightDragClone = null;
+    }
+    if (rightDragElement) rightDragElement.style.opacity = '1';
+    
+    document.querySelectorAll('.sound-button').forEach(b => b.classList.remove('drag-over'));
+    
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    if (target) {
+      const targetBtn = target.closest('.sound-button');
+      if (targetBtn && targetBtn !== rightDragElement) {
+        const targetId = targetBtn.getAttribute('data-sound-id');
+        if (draggedSoundId && targetId && draggedSoundId !== targetId) {
+          try {
+            const sounds = await invoke('get_sounds');
+            const originalIds = sounds.map(s => s.id);
+            const fromIdx = originalIds.indexOf(draggedSoundId);
+            const toIdx = originalIds.indexOf(targetId);
+            if (fromIdx !== -1 && toIdx !== -1) {
+              originalIds.splice(fromIdx, 1);
+              originalIds.splice(toIdx, 0, draggedSoundId);
+              await invoke('reorder_sounds', { newOrder: originalIds });
+              render();
+            }
+          } catch(err) { console.error(err); }
+        }
+      }
+    }
+    
+    draggedSoundId = null;
+    rightDragElement = null;
+  }
+});
 
 async function render() {
   try {
@@ -664,47 +723,28 @@ async function render() {
       btn.type = 'button';
       btn.setAttribute('data-sound-id', sound.id);
       
-      // -- DRAG AND DROP --
-      // Only enable dragging if we are not actively filtering/searching (to prevent complex reordering logic)
+      // -- DRAG AND DROP (Custom Right-Click) --
       if (currentCategory === 'All' && !searchQuery) {
-        btn.draggable = true;
-        btn.ondragstart = (e) => {
-          draggedSoundId = sound.id;
-          e.dataTransfer.effectAllowed = 'move';
-          btn.style.opacity = '0.5';
-        };
-        btn.ondragend = (e) => {
-          btn.style.opacity = '1';
-          draggedSoundId = null;
-          document.querySelectorAll('.sound-button').forEach(b => b.classList.remove('drag-over'));
-        };
-        btn.ondragover = (e) => {
-          e.preventDefault();
-          if (draggedSoundId !== sound.id) {
-            btn.classList.add('drag-over');
-          }
-        };
-        btn.ondragleave = (e) => {
-          btn.classList.remove('drag-over');
-        };
-        btn.ondrop = async (e) => {
-          e.preventDefault();
-          btn.classList.remove('drag-over');
-          if (draggedSoundId && draggedSoundId !== sound.id) {
-            // Reorder
-            const originalIds = sounds.map(s => s.id);
-            const fromIdx = originalIds.indexOf(draggedSoundId);
-            const toIdx = originalIds.indexOf(sound.id);
-            if (fromIdx !== -1 && toIdx !== -1) {
-              originalIds.splice(fromIdx, 1); // remove
-              originalIds.splice(toIdx, 0, draggedSoundId); // insert at new pos
-              try {
-                await invoke('reorder_sounds', { newOrder: originalIds });
-                render();
-              } catch (err) {
-                console.error("Reorder failed", err);
-              }
-            }
+        btn.oncontextmenu = (e) => e.preventDefault();
+        btn.onmousedown = (e) => {
+          if (e.button === 2) { // Right click
+            e.preventDefault();
+            rightDragActive = true;
+            draggedSoundId = sound.id;
+            rightDragElement = btn;
+            
+            rightDragClone = btn.cloneNode(true);
+            rightDragClone.style.position = 'fixed';
+            rightDragClone.style.pointerEvents = 'none';
+            rightDragClone.style.opacity = '0.8';
+            rightDragClone.style.zIndex = '9999';
+            rightDragClone.style.width = btn.offsetWidth + 'px';
+            rightDragClone.style.height = btn.offsetHeight + 'px';
+            rightDragClone.style.left = (e.clientX - btn.offsetWidth/2) + 'px';
+            rightDragClone.style.top = (e.clientY - btn.offsetHeight/2) + 'px';
+            document.body.appendChild(rightDragClone);
+            
+            btn.style.opacity = '0.3';
           }
         };
       }
