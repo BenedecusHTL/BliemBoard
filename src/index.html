@@ -639,7 +639,7 @@
     </div>
     <div class="header-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
       <div style="flex: 1; text-align: left;">
-        <span class="version">v1.0.12</span>
+        <span class="version">v1.0.13</span>
       </div>
       <div style="flex: 1; text-align: center;">
         <span id="mutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 0 4px; border-radius: 3px; font-size: 10px;">MUTED</span>
@@ -661,7 +661,7 @@
     <button class="btn-danger" onclick="stopAll()">■ Stop All</button>
     <div class="controls-sep"></div>
     <div class="search-container" style="display:flex; flex:1; min-width:100px; max-width: 250px;">
-      <input type="search" id="searchInput" placeholder="Search sounds..." style="width:100%; background:var(--bg-3); color:var(--text-1); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:12px; outline:none; font-family:inherit;">
+      <input type="search" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Search sounds..." style="width:100%; background:var(--bg-3); color:var(--text-1); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:12px; outline:none; font-family:inherit;">
     </div>
     <div class="controls-sep"></div>
     <div class="volume-control">
@@ -686,7 +686,7 @@
   <!-- ── SETTINGS OVERLAY ── -->
   <div id="settingsOverlay" class="edit-overlay">
     <div class="edit-modal" style="width: 450px;">
-      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.12</span></div>
+      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.13</span></div>
       <div class="modal-body">
         
         <div class="modal-header">Audio Routing (Virtual Cable):</div>
@@ -716,12 +716,12 @@
           </select>
           <span id="settingsMutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 4px 8px; border-radius: 3px; font-size: 10px;">MUTED</span>
         </div>
-        <input type="text" id="muteHotkey" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+        <input type="text" id="muteHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
 
         <div class="modal-header">Appearance:</div>
         <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
           <input type="color" id="themeColor" onchange="setThemeColor(this.value)" value="#5cf0f0" style="background:none; border:none; width:30px; height:30px; cursor:pointer;">
-          <input type="text" id="headerText" placeholder="BliemBoard (leave empty for ASCII art)" onchange="setHeaderText(this.value)" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; outline:none; font-size:12px; flex:1;">
+          <input type="text" id="headerText" autocomplete="off" spellcheck="false" placeholder="BliemBoard (leave empty for ASCII art)" onchange="setHeaderText(this.value)" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; outline:none; font-size:12px; flex:1;">
         </div>
         <div style="display:flex; gap: 10px; margin-bottom: 25px; align-items: center;">
           <button class="btn" onclick="document.getElementById('logoUpload').click()">Logo</button>
@@ -754,11 +754,11 @@
       <div class="modal-titlebar">SOUND SETTINGS</div>
       <div class="modal-body">
         <div class="modal-header">Sound Label:</div>
-        <input type="text" id="editInput" placeholder="sound_name" style="margin-bottom: 10px;">
+        <input type="text" id="editInput" autocomplete="off" spellcheck="false" placeholder="sound_name" style="margin-bottom: 10px;">
         
         <div class="modal-header" style="margin-top: 10px;">Category:</div>
         <div style="position:relative; margin-bottom: 10px;">
-          <input type="text" id="editCategory" autocomplete="off" placeholder="e.g. Memes, Music..." style="margin-bottom: 0;">
+          <input type="text" id="editCategory" autocomplete="off" spellcheck="false" placeholder="e.g. Memes, Music..." style="margin-bottom: 0;">
           <div id="categoryCustomList" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--bg-4); border:1px solid var(--border); border-top:none; z-index:100; max-height:150px; overflow-y:auto; border-radius:0 0 4px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></div>
         </div>
 
@@ -772,7 +772,7 @@
         <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">🖼 Change Image</button>
 
         <div class="modal-header" style="margin-top: 10px;">Hotkey:</div>
-        <input type="text" id="editHotkey" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+        <input type="text" id="editHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
 
         <div class="modal-buttons" style="justify-content: space-between;">
           <button class="btn" style="color: #ff5555; border-color: rgba(255,85,85,0.3);" onclick="triggerDeleteSound()">Delete</button>
