@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BliemBoard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=block');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ─── COLOR SYSTEM ─────────────────────────────────────────── */
+    :root {
+      --text-1: oklch(95% 0 0);
+      --text-2: oklch(85% 0 0);
+      --text-3: oklch(75% 0 0);
+      --text-4: oklch(60% 0 0);
+      --text-5: oklch(40% 0 0);
+      --bg-1: oklch(31% 0 0 / 0.75);
+      --bg-2: oklch(27% 0 0 / 0.70);
+      --bg-3: oklch(23% 0 0 / 0.65);
+      --bg-4: oklch(19% 0 0 / 0.60);
+      --hover:    oklch(54% 0 0 / 0.10);
+      --active:   oklch(54% 0 0 / 0.20);
+      --active-2: oklch(54% 0 0 / 0.30);
+      --border-light: oklch(54% 0 0 / 0.10);
+      --border:       oklch(54% 0 0 / 0.20);
+      --border-hover: oklch(73% 0.07 105);
+      /* Gold scale */
+      --gold-1: oklch(78% 0.07 105);
+      --gold-2: oklch(73% 0.07 105);
+      --gold-3: oklch(68% 0.07 105);
+      --gold-4: oklch(63% 0.07 105);
+      --gold-5: oklch(58% 0.07 105);
+      /* Accent aliases */
+      --accent-1: var(--gold-1);
+      --accent-2: var(--gold-2);
+      --accent-3: var(--gold-3);
+      --accent-4: var(--gold-4);
+      --accent-5: var(--gold-5);
+      /* Danger */
+      --red-2: oklch(70% 0.13 0);
+      /* Title colors (Terminal MCP look) */
+      --title-cyan: #5cf0f0;
+      --title-pink: #ff5ec4;
+    }
+
+    /* ─── BODY & BACKGROUND ─────────────────────────────────────── */
+    html, body {
+      min-height: 100vh;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      color: var(--text-2);
+      background: #111214;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    /* ─── HEADER / TITLE BLOCK ──────────────────────────────────── */
+    .header {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .title-block {
+      padding: 1.5rem 1.5rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+
+    .title-block img.ascii-title {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .header-meta {
+      padding: 0.65rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-5);
+      letter-spacing: 0.04em;
+    }
+
+    .header-meta .version {
+      color: var(--accent-2);
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: oklch(70% 0.12 170);
+      margin-right: 6px;
+      box-shadow: 0 0 6px oklch(70% 0.12 170 / 0.6);
+    }
+
+    /* ─── CONTROLS BAR ──────────────────────────────────────────── */
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 10px 14px;
+      margin-bottom: 1rem;
+    }
+
+    .controls-sep {
+      flex: 1;
+    }
+
+    .volume-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .volume-control label {
+      font-size: 11px;
+      color: var(--text-5);
+      letter-spacing: 0.06em;
+    }
+
+    .volume-control input[type="range"] {
+      width: 110px;
+      height: 3px;
+      background: var(--border);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .volume-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px; height: 12px;
+      background: var(--accent-2);
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    .volume-control input[type="range"]::-moz-range-thumb {
+      width: 12px; height: 12px;
+      background: var(--accent-2);
+      cursor: pointer;
+      border: none;
+      border-radius: 2px;
+    }
+
+    .volume-value {
+      font-size: 11px;
+      color: var(--accent-1);
+      min-width: 34px;
+    }
+
+    .btn-primary {
+      background: var(--active);
+      color: var(--accent-1);
+      border: 1px solid var(--accent-5);
+      padding: 6px 16px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      transition: all 0.12s;
+    }
+
+    .btn-primary:hover {
+      background: color-mix(in oklch, var(--accent-3), transparent 75%);
+      border-color: var(--accent-2);
+      color: var(--accent-1);
+    }
+
+    .btn-primary:active {
+      background: color-mix(in oklch, var(--accent-3), transparent 60%);
+    }
+
+    .btn-danger {
+      background: var(--active);
+      color: var(--red-2);
+      border: 1px solid oklch(70% 0.13 0 / 0.35);
+      padding: 6px 16px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      border-radius: 4px;
+      transition: all 0.12s;
+    }
+
+    .btn-danger:hover {
+      background: oklch(70% 0.13 0 / 0.12);
+      border-color: var(--red-2);
+    }
+
+    /* ─── GRID ──────────────────────────────────────────────────── */
+    .soundboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 8px;
+      margin-bottom: 1rem;
+      min-height: 140px;
+    }
+
+    .sound-button {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .sound-button.drag-over {
+      border-color: var(--accent-1);
+      box-shadow: 0 0 10px var(--accent-1);
+      opacity: 0.8;
+    }
+
+    .sound-button:hover {
+      border-color: var(--accent-1);
+      background: var(--hover);
+      transform: translateY(-2px);
+    }
+
+    /* ── TABS ── */
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 15px;
+      margin-bottom: 5px;
+    }
+    .tabs-container::-webkit-scrollbar {
+      height: 4px;
+    }
+    .tabs-container::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 2px;
+    }
+    .tab-btn {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      border-color: var(--accent-2);
+      color: var(--text-1);
+    }
+    .tab-btn.active {
+      background: var(--accent-1);
+      border-color: var(--accent-1);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .sound-button:active {
+      background: var(--active);
+    }
+
+    .sound-button.playing {
+      border-color: var(--accent-2);
+      background: color-mix(in oklch, var(--accent-4), transparent 82%);
+      color: var(--accent-1);
+      box-shadow: 0 0 0 1px var(--accent-5) inset;
+    }
+
+    .progress-bar {
+      position: absolute;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: var(--accent-2);
+      pointer-events: none;
+      z-index: 2;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .sound-button > * { position: relative; z-index: 1; }
+
+    .sound-image {
+      width: 100%; height: 60%;
+      object-fit: cover;
+      margin-bottom: 7px;
+      border-radius: 3px;
+      opacity: 0.85;
+    }
+
+    .sound-label {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: var(--text-3);
+    }
+
+    .sound-button.playing .sound-label { color: var(--accent-1); }
+
+    .playing-tag {
+      display: none;
+      position: absolute;
+      top: 8px; left: 8px;
+      background: var(--accent-2); color: var(--bg-1);
+      padding: 2px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: bold;
+    }
+    .sound-button.playing .playing-tag { display: block; }
+      
+    /* Checkbox Styling */
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    input[type="checkbox"]:checked {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+    input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 4px;
+      height: 8px;
+      border: solid var(--bg-1);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    input[type="checkbox"]:hover {
+      border-color: var(--accent-2);
+    }
+
+    /* hover action menu */
+    .button-menu {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: var(--bg-4);
+      border: 1px solid var(--border);
+      padding: 3px 4px;
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s;
+      border-radius: 4px;
+    }
+
+    .sound-button:hover .button-menu {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .icon-btn {
+      width: 20px; height: 20px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: color 0.1s;
+      font-family: inherit;
+      border-radius: 3px;
+    }
+
+    .icon-btn:hover { color: var(--accent-1); background: var(--hover); }
+
+    .add-button {
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-5);
+    }
+
+    .add-button:hover {
+      border-color: var(--accent-4);
+      border-style: solid;
+      color: var(--accent-2);
+      background: var(--hover);
+    }
+
+    /* ─── MODAL ──────────────────────────────────────────────────── */
+    .edit-overlay {
+      position: fixed;
+      inset: 0;
+      background: oklch(0% 0 0 / 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .edit-overlay.show { display: flex; }
+
+    .edit-modal {
+      background: var(--bg-1);
+      border: 1px solid var(--border-hover);
+      padding: 0;
+      min-width: 320px;
+      max-width: 420px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5);
+    }
+
+    .modal-titlebar {
+      background: color-mix(in oklch, var(--accent-4), transparent 78%);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--accent-1);
+    }
+
+    .modal-body { padding: 16px; }
+
+    .modal-header {
+      font-size: 11px;
+      color: var(--text-4);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      transition: all 0.1s;
+      color: var(--text-3);
+      border-radius: 4px;
+    }
+
+    .btn:hover {
+      border-color: var(--text-5);
+      background: var(--hover);
+    }
+
+    .btn-primary-modal {
+      color: var(--accent-1);
+      border-color: var(--accent-5);
+    }
+
+    .btn-primary-modal:hover {
+      background: color-mix(in oklch, var(--accent-3), transparent 75%);
+      border-color: var(--accent-2);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-4);
+      color: var(--accent-1);
+      font-family: inherit;
+      font-size: 12px;
+      margin-bottom: 4px;
+      caret-color: var(--accent-1);
+      outline: none;
+      box-sizing: border-box;
+      border-radius: 4px;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-4);
+      box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent-3), transparent 80%);
+    }
+
+    input[type="file"] { display: none; }
+
+    /* ─── FOOTER INFO ────────────────────────────────────────────── */
+    .info-text {
+      font-size: 10px;
+      color: var(--text-5);
+      line-height: 1.8;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 8px 14px;
+      border-radius: 0 0 6px 6px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── TOAST ──────────────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-1);
+      border: 1px solid var(--accent-4);
+      color: var(--accent-1);
+      padding: 9px 16px;
+      font-size: 11px;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      z-index: 2000;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px oklch(0% 0 0 / 0.4);
+      animation: slideIn 0.15s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    /* ─── VISUALIZER ─────────────────────────────────────────────── */
+    .visualizer-wrap {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-top: none;
+      height: 52px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #viz-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── DROP OVERLAY ───────────────────────────────────────────── */
+    #drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: oklch(12% 0.04 205 / 0.85);
+      border: 3px dashed var(--title-cyan);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      pointer-events: none;
+      backdrop-filter: blur(2px);
+    }
+
+    #drop-overlay.show { display: flex; }
+
+    .drop-label {
+      font-size: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--title-cyan);
+      letter-spacing: 0.12em;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .drop-label small {
+      display: block;
+      font-size: 11px;
+      color: var(--text-4);
+      margin-top: 8px;
+      letter-spacing: 0.06em;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── HEADER ── -->
+  <div class="header">
+    <div class="title-block" id="titleBlock" style="text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100px;">
+      <canvas id="ascii-canvas" style="display:block;width:100%;height:auto;"></canvas>
+      <img id="custom-logo" style="display:none; max-width: 100%; max-height: 120px; object-fit: contain;">
+      <h1 id="custom-text" style="display:none; font-size: 32px; font-weight: bold; color: var(--accent-1); letter-spacing: 2px;"></h1>
+    </div>
+    <div class="header-meta">
+      <span class="version" style="text-align: left;">v1.0.7</span>
+      <span id="mutedBadge" style="display:none; text-align: center; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 0 4px; border-radius: 3px; font-size: 10px;">MUTED</span>
+      <span id="updateBadge" style="text-align: right; color: var(--accent-1); cursor: pointer; display: none; text-decoration: underline;"></span>
+    </div>
+  </div>
+
+  <!-- ── VISUALIZER ── -->
+  <div class="visualizer-wrap">
+    <canvas id="viz-canvas"></canvas>
+  </div>
+
+  <!-- ── CONTROLS ── -->
+  <div class="controls">
+    <button class="btn-primary" onclick="addSound()">+ Add Sound</button>
+    <button class="btn-danger" onclick="stopAll()">■ Stop All</button>
+    <div class="controls-sep"></div>
+    <div class="search-container" style="display:flex; flex:1; min-width:100px; max-width: 250px;">
+      <input type="search" id="searchInput" placeholder="Search sounds..." style="width:100%; background:var(--bg-3); color:var(--text-1); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:12px; outline:none; font-family:inherit;">
+    </div>
+    <div class="controls-sep"></div>
+    <div class="volume-control">
+      <label for="masterVolume">VOL</label>
+      <input type="range" id="masterVolume" min="0" max="100" value="70" oninput="setMasterVolume(this.value)">
+      <span class="volume-value" id="volumeValue">70%</span>
+    </div>
+    <button class="btn-icon" onclick="openSettings()" title="Settings">⚙️</button>
+  </div>
+
+  <!-- ── CATEGORY TABS ── -->
+  <div id="categoryTabs" class="tabs-container"></div>
+
+  <!-- ── SOUNDBOARD GRID ── -->
+  <div id="soundboard" class="soundboard-grid"></div>
+
+  <!-- ── SETTINGS OVERLAY ── -->
+  <div id="settingsOverlay" class="edit-overlay">
+    <div class="edit-modal" style="width: 450px;">
+      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.7</span></div>
+      <div class="modal-body">
+        
+        <div class="modal-header">Audio Routing (Virtual Cable):</div>
+        <select id="micSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setMic(this.value)">
+          <option value="">Loading devices...</option>
+        </select>
+        
+        <div style="margin-bottom: 25px; display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="testMic" onchange="toggleTestMic(this.checked)"> Hear Myself (Test)
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="autoStart" onchange="toggleAutoStart(this.checked)"> Start on Boot
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;" title="Mute local audio when playing so Discord screen share doesn't double-play it">
+          <input type="checkbox" id="muteLocal" onchange="toggleMuteLocal(this.checked)"> Mute Local Mic (Discord screenshare mode)
+          </label>
+        </div>
+
+        <div class="modal-header">Global Mute (Stop local/cable output):</div>
+        <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+          <select id="muteReminderSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%;" onchange="setMuteReminder(this.value)">
+            <option value="0">No Reminder</option>
+            <option value="1">Remind after 1 minute</option>
+            <option value="10">Remind after 10 minutes</option>
+            <option value="30">Remind after 30 minutes</option>
+          </select>
+          <span id="settingsMutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 4px 8px; border-radius: 3px; font-size: 10px;">MUTED</span>
+        </div>
+        <input type="text" id="muteHotkey" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+
+        <div class="modal-header">Appearance:</div>
+        <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+          <input type="color" id="themeColor" onchange="setThemeColor(this.value)" value="#5cf0f0" style="background:none; border:none; width:30px; height:30px; cursor:pointer;">
+          <input type="text" id="headerText" placeholder="BliemBoard (leave empty for ASCII art)" onchange="setHeaderText(this.value)" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; outline:none; font-size:12px; flex:1;">
+        </div>
+        <div style="display:flex; gap: 10px; margin-bottom: 25px; align-items: center;">
+          <button class="btn" onclick="document.getElementById('logoUpload').click()">Logo</button>
+          <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(event)" style="font-size:12px; flex: 1; color: var(--text-2);">
+          <button class="btn" style="color:#ff5555; border-color:rgba(255,85,85,0.3);" onclick="removeLogo()">Remove</button>
+        </div>
+
+        <div class="modal-header">UI Visibility:</div>
+        <div style="margin-bottom: 25px; display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="hideVisualizerCheckbox" onchange="toggleHideVisualizer(this.checked)"> Hide Audio Visualizer
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="hideMetaCheckbox" onchange="toggleHideMeta(this.checked)"> Hide Status Bar (ready, muted, version)
+          </label>
+        </div>
+
+        <div class="modal-buttons" style="margin-top: 15px;">
+          <button class="btn btn-primary-modal" onclick="closeSettings()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- ── SOUND SETTINGS MODAL ── -->
+  <div id="editOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">SOUND SETTINGS</div>
+      <div class="modal-body">
+        <div class="modal-header">Sound Label:</div>
+        <input type="text" id="editInput" placeholder="sound_name" style="margin-bottom: 10px;">
+        
+        <div class="modal-header" style="margin-top: 10px;">Category:</div>
+        <div style="position:relative; margin-bottom: 10px;">
+          <input type="text" id="editCategory" autocomplete="off" placeholder="e.g. Memes, Music..." style="margin-bottom: 0;">
+          <div id="categoryCustomList" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--bg-4); border:1px solid var(--border); border-top:none; z-index:100; max-height:150px; overflow-y:auto; border-radius:0 0 4px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></div>
+        </div>
+
+        <div class="modal-header" style="margin-top: 10px;">Individual Volume:</div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="range" id="editVolume" min="0" max="100" value="100" oninput="document.getElementById('editVolVal').innerText = this.value + '%'" style="flex: 1;">
+            <span id="editVolVal" style="font-size: 11px; color: var(--text-2); min-width: 35px; text-align:right;">100%</span>
+        </div>
+
+        <div class="modal-header" style="margin-top: 10px;">Image:</div>
+        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">🖼 Change Image</button>
+
+        <div class="modal-header" style="margin-top: 10px;">Hotkey:</div>
+        <input type="text" id="editHotkey" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+
+        <div class="modal-buttons" style="justify-content: space-between;">
+          <button class="btn" style="color: #ff5555; border-color: rgba(255,85,85,0.3);" onclick="triggerDeleteSound()">Delete</button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeEdit()">Cancel</button>
+            <button class="btn btn-primary-modal" onclick="saveEdit()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CONFIRM OVERLAY ── -->
+  <div id="confirmOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">CONFIRM ACTION</div>
+      <div class="modal-body">
+        <div class="modal-header" id="confirmMessage" style="text-align:center; margin-bottom:15px;">Are you sure?</div>
+        <div class="modal-buttons">
+          <button class="btn" onclick="closeConfirm()">Cancel</button>
+          <button class="btn btn-primary-modal" id="confirmYesBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MIC PERMISSION OVERLAY ── -->
+  <div id="micOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">MICROPHONE ACCESS</div>
+      <div class="modal-body">
+        <div class="modal-header" style="text-align:center; margin-bottom:15px; font-weight: normal; font-size: 14px;">
+          BliemBoard needs microphone access for the audio visualizer.<br><br>
+          <span style="color:var(--text-5); font-size: 12px;">(Windows might ask you to confirm again after this)</span>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn" onclick="closeMicOverlay()">Cancel</button>
+          <button class="btn btn-primary-modal" id="micAllowBtn">Zulassen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── DROP OVERLAY (outside container, fixed full-screen) ── -->
+<div id="drop-overlay">
+  <div class="drop-label">
+    DROP AUDIO FILES
+    <small>mp3 · wav · ogg · flac · aac · mp4</small>
+  </div>
+</div>
+
+<!-- ── AUDIO EDITOR OVERLAY ── -->
+<div id="audioEditorOverlay" class="edit-overlay" style="display:none;">
+  <div class="edit-modal" style="width: min(700px, 96vw); max-width: 700px;">
+    <div class="modal-titlebar">
+      ✂️ AUDIO EDITOR
+      <span id="audioEditorName" style="font-weight:normal; font-size:11px; opacity:0.6; margin-left:8px;"></span>
+    </div>
+    <div class="modal-body" style="gap: 12px;">
+      <!-- Waveform canvas -->
+      <div style="position:relative; background:var(--bg-3); border-radius:6px; overflow:hidden; border:1px solid var(--border);">
+        <canvas id="editorWaveform" style="display:block; width:100%; height:120px; cursor:crosshair;"></canvas>
+        <!-- Start handle -->
+        <div id="editorHandleStart" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--accent-1); cursor:ew-resize; left:0%;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; left:3px; background:var(--accent-1);
+            color:#000; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">▶ START</div>
+        </div>
+        <!-- End handle -->
+        <div id="editorHandleEnd" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--red-2); cursor:ew-resize; right:0%; left:unset;
+          box-shadow: -2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; right:3px; background:var(--red-2);
+            color:#fff; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">END ◀</div>
+        </div>
+        <!-- Playhead -->
+        <div id="editorPlayhead" style="
+          position:absolute; top:0; bottom:0; width:2px;
+          background:rgba(255,255,255,0.6); pointer-events:none; display:none; left:0%;"></div>
+        <!-- Dim region outside selection -->
+        <div id="editorDimLeft" style="
+          position:absolute; top:0; bottom:0; left:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+        <div id="editorDimRight" style="
+          position:absolute; top:0; bottom:0; right:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+      </div>
+
+      <!-- Time labels -->
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-2); padding:0 2px;">
+        <span>Start: <b id="editorStartLabel" style="color:var(--accent-1);">0.00s</b></span>
+        <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">—</b></span>
+        <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
+      </div>
+
+      <!-- Loading / error state -->
+      <div id="editorStatus" style="font-size:12px; color:var(--text-2); text-align:center; min-height:16px;"></div>
+
+      <!-- Buttons -->
+      <div class="modal-buttons" style="margin-top:4px;">
+        <button class="btn" onclick="window.closeAudioEditor()">Cancel</button>
+        <button class="btn" id="editorPreviewBtn" onclick="window.previewAudioTrim()" style="gap:4px;">
+          ▶ Preview
+        </button>
+        <button class="btn btn-primary-modal" id="editorSaveBtn" onclick="window.saveAudioTrim()">
+          ✂️ Save Trim
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #audioEditorOverlay.show { display:flex !important; }
+  #editorWaveform { image-rendering: pixelated; }
+</style>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
