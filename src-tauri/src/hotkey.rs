@@ -87,7 +87,7 @@ pub fn init() {
                                 }
                                 if let Some(action) = h.sounds.get(&combo_str) {
                                     let path = std::path::PathBuf::from(&action.path);
-                                    let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::Play(action.id.clone(), path, action.volume));
+                                    let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::Play(action.id.clone(), path, action.volume, false));
                                 }
                             }
                         }

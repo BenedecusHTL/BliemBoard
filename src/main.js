@@ -177,11 +177,25 @@ function ensureAudioCtx() {
   muteGain.connect(audioCtx.destination);
 }
 
+async function playSound(soundId) {
+  try {
+    const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
+    await invoke('play_sound', { id: soundId, stopOnReclick });
+    
+    // Note: The '.playing' class and duration logic is now handled precisely 
+    // inside startSoundAnalysis once we decode the audio to find its true length!
+    startSoundAnalysis(soundId);
+  } catch (error) {
+    showToast('Error playing sound: ' + error);
+    console.error('Play error:', error);
+  }
+}
+
 async function startSoundAnalysis(soundId) {
   try {
     ensureAudioCtx();
     if (audioCtx.state === 'suspended') await audioCtx.resume();
-    stopSoundAnalysis(soundId);                       // cancel previous instance
+    stopSoundAnalysis(soundId); // cancel previous instance
 
     const bytes = await invoke('read_sound_bytes', { id: soundId });
     if (!bytes) return;
@@ -193,7 +207,20 @@ async function startSoundAnalysis(soundId) {
     source.buffer = decoded;
     source.connect(analyser);
     source.start(0);
-    source.onended = () => activeSources.delete(soundId);
+
+    const btn = document.querySelector(`[data-sound-id="${soundId}"]`);
+    if (btn) {
+      // Force a reflow by removing and re-adding playing to reset the CSS transition
+      btn.classList.remove('playing');
+      void btn.offsetWidth;
+      btn.style.setProperty('--duration', decoded.duration + 's');
+      btn.classList.add('playing');
+    }
+
+    source.onended = () => {
+      activeSources.delete(soundId);
+      if (btn) btn.classList.remove('playing');
+    };
     activeSources.set(soundId, source);
   } catch (e) {
     console.warn('Visualizer analysis error:', e);
@@ -438,22 +465,6 @@ async function initDragDrop() {
 
 /* ─── APP LOGIC ────────────────────────────────────────────── */
 let editingId = null;
-
-async function playSound(soundId) {
-  try {
-    const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
-    await invoke('play_sound', { id: soundId, stopOnReclick });
-    const btn = document.querySelector(`[data-sound-id="${soundId}"]`);
-    if (btn) {
-      btn.classList.add('playing');
-      setTimeout(() => btn.classList.remove('playing'), 3000);
-    }
-    startSoundAnalysis(soundId);   // real frequency data for visualizer
-  } catch (error) {
-    showToast('Error playing sound: ' + error);
-    console.error('Play error:', error);
-  }
-}
 
 async function stopAll() {
   try {

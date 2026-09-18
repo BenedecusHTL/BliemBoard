@@ -144,7 +144,7 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
 
         for cmd in rx {
             match cmd {
-                AudioCommand::Play(id, path, ind_vol, stop_on_reclick) => { if stop_on_reclick { if let Some(existing) = sinks.get(&id) { let mut is_playing = false; if let Some(l) = &existing.local { if !l.empty() { is_playing = true; } } if let Some(c) = &existing.cable { if !c.empty() { is_playing = true; } } if is_playing { sinks.remove(&id); return; } } } {
+                AudioCommand::Play(id, path, ind_vol, stop_on_reclick) => { if stop_on_reclick { if let Some(existing) = sinks.get(&id) { let mut is_playing = false; if let Some(l) = &existing.local { if !l.empty() { is_playing = true; } } if let Some(c) = &existing.cable { if !c.empty() { is_playing = true; } } if is_playing { sinks.remove(&id); continue; } } }
                     let mut local_sink = None;
                     if let Some(h1) = &handle1 {
                         match Sink::try_new(h1) {
