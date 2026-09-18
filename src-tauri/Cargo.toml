@@ -1,6 +1,6 @@
 [package]
 name = "soundboard-tauri"
-version = "1.0.23"
+version = "1.0.24"
 description = "A terminal MCP style Soundboard"
 authors = ["You"]
 edition = "2021"

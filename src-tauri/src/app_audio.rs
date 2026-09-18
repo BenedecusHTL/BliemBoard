@@ -1,3 +1,26 @@
+use rodio::source::Source;
+use ringbuf::traits::{Consumer, Producer, Split};
+use ringbuf::HeapRb;
+
+struct LoopbackSource {
+    consumer: ringbuf::HeapCons<f32>,
+    sample_rate: u32,
+    channels: u16,
+}
+
+impl Iterator for LoopbackSource {
+    type Item = f32;
+    fn next(&mut self) -> Option<f32> {
+        Some(self.consumer.try_pop().unwrap_or(0.0))
+    }
+}
+
+impl Source for LoopbackSource {
+    fn current_frame_len(&self) -> Option<usize> { None }
+    fn channels(&self) -> u16 { self.channels }
+    fn sample_rate(&self) -> u32 { self.sample_rate }
+    fn total_duration(&self) -> Option<std::time::Duration> { None }
+}
 // app_audio.rs - Per-process WASAPI audio loopback -> VB-Cable routing
 
 use base64::engine::general_purpose::STANDARD as B64;
@@ -317,9 +340,9 @@ unsafe fn run_loopback_thread(
 
     let cable_device = match cable_device { Some(d) => d, None => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
     let (cable_stream, cable_handle) = match OutputStream::try_from_device(&cable_device) { Ok(r) => r, Err(_) => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
-    let (queue_tx, queue_rx) = rodio::queue::queue::<f32>(true);
+    let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split(); let source = LoopbackSource { consumer: cons, sample_rate, channels };
     let sink = match Sink::try_new(&cable_handle) { Ok(s) => s, Err(_) => { let _ = audio_client.Stop(); let _ = CloseHandle(ready_event); return; } };
-    sink.append(queue_rx);
+    sink.append(source);
     sink.detach();
     let _stream_guard = cable_stream;
 
@@ -342,7 +365,7 @@ unsafe fn run_loopback_thread(
                 std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0 * vol).collect()
             } else { vec![0f32; total] };
             let _ = capture_client.ReleaseBuffer(num_frames);
-            queue_tx.append(rodio::buffer::SamplesBuffer::new(channels, sample_rate, samples));
+            for s in samples { let _ = prod.try_push(s); }
         }
     }
     let _ = audio_client.Stop();
