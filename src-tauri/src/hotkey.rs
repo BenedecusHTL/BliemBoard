@@ -78,11 +78,7 @@ pub fn init() {
 
                             // Check against hotkeys
                             if let Ok(h) = HOTKEYS.lock() {
-                                let log_msg = format!("Pressed: '{}', Mute is: '{:?}'\n", combo_str, h.mute);
-                                use std::io::Write;
-                                if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(std::env::temp_dir().join("bliemboard_hotkey.log")) {
-                                    let _ = file.write_all(log_msg.as_bytes());
-                                }
+
 
                                 if let Some(ref m) = h.mute {
                                     if m == &combo_str {
