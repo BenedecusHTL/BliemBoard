@@ -198,10 +198,13 @@ async fn download_and_install_update(url: String, app: tauri::AppHandle) -> Resu
         return Err("Download failed".into());
     }
     
-    // Hidden powershell script: waits 2 seconds, kills app, installs passively
+    let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
+    
+    // Hidden powershell script: waits 2 seconds, kills app, installs passively, then restarts app
     let script = format!(
-        "Start-Sleep -Seconds 2; Stop-Process -Name 'soundboard-tauri' -Force -ErrorAction SilentlyContinue; Start-Process 'msiexec.exe' -ArgumentList '/i', '\"{}\"', '/passive' -Wait",
-        installer_path.display()
+        "Start-Sleep -Seconds 2; Stop-Process -Name 'soundboard-tauri' -Force -ErrorAction SilentlyContinue; Start-Process 'msiexec.exe' -ArgumentList '/i', '\"{}\"', '/passive' -Wait; Start-Process '\"{}\"'",
+        installer_path.display(),
+        exe_path.display()
     );
     
     std::process::Command::new("powershell")
