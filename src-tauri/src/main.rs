@@ -4,6 +4,7 @@
 mod audio;
 mod store;
 mod hotkey;
+mod app_audio;
 
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -371,6 +372,32 @@ fn update_rust_hotkeys(
     hotkey::update_hotkeys(resolved_sounds, mute);
 }
 
+#[tauri::command]
+fn get_audio_sessions() -> Vec<app_audio::AudioSessionInfo> {
+    app_audio::get_audio_sessions()
+}
+
+#[tauri::command]
+fn set_app_volume(pid: u32, volume: f32) {
+    app_audio::set_app_volume(pid, volume);
+}
+
+#[tauri::command]
+fn start_app_loopback(pid: u32, volume: f32, state: State<'_, AppState>) {
+    let virtual_output = {
+        // Read VB-Cable name from the audio module's tracked name
+        // We'll pass None and let app_audio auto-detect the cable device
+        None::<String>
+    };
+    app_audio::start_app_loopback(pid, volume, virtual_output);
+}
+
+#[tauri::command]
+fn stop_app_loopback(pid: u32) {
+    app_audio::stop_app_loopback(pid);
+}
+
+
 fn main() {
     hotkey::init();
     tauri::Builder::default()
@@ -478,7 +505,11 @@ fn main() {
             export_board,
             import_board,
             update_rust_hotkeys,
-            generate_ascii_art
+            generate_ascii_art,
+            get_audio_sessions,
+            set_app_volume,
+            start_app_loopback,
+            stop_app_loopback
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

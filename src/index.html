@@ -639,7 +639,7 @@
     </div>
     <div class="header-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
       <div style="flex: 1; text-align: left;">
-        <span class="version">v1.0.16</span>
+        <span class="version">v1.0.17</span>
       </div>
       <div style="flex: 1; text-align: center;">
         <span id="mutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 0 4px; border-radius: 3px; font-size: 10px;">MUTED</span>
@@ -680,13 +680,43 @@
   <!-- ── CATEGORY TABS ── -->
   <div id="categoryTabs" class="tabs-container"></div>
 
+  <!-- ── ADDITIONAL AUDIO ── -->
+  <div id="additionalAudioPanel" style="display:none; border-top: 1px solid var(--border); margin-bottom: 12px; padding-top: 12px;">
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
+      <span style="font-size:11px; color:var(--text-4); letter-spacing:0.05em; font-weight:600; text-transform:uppercase;">Additional Audio</span>
+      <button class="tab-btn" id="addAudioBtn" onclick="openAddAudioModal()" style="padding: 3px 8px; font-size:11px; line-height:1;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add App
+      </button>
+    </div>
+    <div id="additionalAudioCards" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
+  </div>
+
   <!-- ── SOUNDBOARD GRID ── -->
   <div id="soundboard" class="soundboard-grid"></div>
+
+  <!-- ── ADD AUDIO APP MODAL ── -->
+  <div id="addAudioOverlay" class="edit-overlay" style="display:none;">
+    <div class="edit-modal" style="width:400px; max-height:80vh;">
+      <div class="modal-titlebar">ADD APPLICATION AUDIO</div>
+      <div class="modal-body">
+        <div class="modal-header">Apps currently playing audio:</div>
+        <div id="audioSessionList" style="display:flex; flex-direction:column; gap:6px; max-height:350px; overflow-y:auto;"></div>
+        <div class="modal-buttons" style="margin-top:15px;">
+          <button class="btn" onclick="document.getElementById('addAudioOverlay').style.display='none'">Cancel</button>
+          <button class="btn btn-primary-modal" onclick="refreshAudioSessions()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ── SETTINGS OVERLAY ── -->
   <div id="settingsOverlay" class="edit-overlay">
     <div class="edit-modal" style="width: 450px;">
-      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.16</span></div>
+      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.17</span></div>
       <div class="modal-body">
         
         <div class="modal-header">Audio Routing (Virtual Cable):</div>
@@ -731,8 +761,8 @@
 
         <div class="modal-header">Data & Backup:</div>
         <div style="display:flex; gap: 10px; margin-bottom: 25px; align-items: center;">
-          <button class="btn" style="flex:1; justify-content: center;" onclick="exportBoard()">📥 Export Data (.bliem)</button>
-          <button class="btn" style="flex:1; justify-content: center;" onclick="importBoard()">📤 Import Data (.bliem)</button>
+          <button class="btn" style="flex:1; justify-content: center; gap:6px;" onclick="exportBoard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Data (.bliem)</button>
+          <button class="btn" style="flex:1; justify-content: center; gap:6px;" onclick="importBoard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="17"/></svg> Import Data (.bliem)</button>
         </div>
 
         <div class="modal-header">UI Visibility:</div>

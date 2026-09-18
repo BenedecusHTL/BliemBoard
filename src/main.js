@@ -1441,3 +1441,157 @@ async function checkForUpdates() {
 }
 
 window.addEventListener('DOMContentLoaded', checkForUpdates);
+
+// ─── ADDITIONAL AUDIO ─────────────────────────────────────────────────────────
+
+let _audioApps = JSON.parse(localStorage.getItem('audioApps') || '[]');
+
+function saveAudioApps() {
+  localStorage.setItem('audioApps', JSON.stringify(_audioApps));
+}
+
+function renderAudioApps() {
+  const container = document.getElementById('additionalAudioCards');
+  const panel = document.getElementById('additionalAudioPanel');
+  if (!container) return;
+  container.innerHTML = '';
+  if (_audioApps.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  _audioApps.forEach(app => {
+    const card = document.createElement('div');
+    card.style.cssText = 'position:relative; display:flex; flex-direction:column; align-items:center; width:115px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:10px 8px 8px; gap:6px; cursor:default;';
+
+    const rm = document.createElement('button');
+    rm.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+    rm.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; color:var(--text-4); cursor:pointer; padding:2px; line-height:0;';
+    rm.onclick = () => window.removeAudioApp(app.pid);
+    card.appendChild(rm);
+
+    const img = document.createElement('div');
+    img.style.cssText = 'width:40px; height:40px; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--bg-3);';
+    if (app.iconBase64) {
+      img.innerHTML = `<img src="data:image/png;base64,${app.iconBase64}" style="width:32px;height:32px;object-fit:contain;">`;
+    } else {
+      img.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--text-4)" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+    }
+    card.appendChild(img);
+
+    const name = document.createElement('div');
+    name.textContent = app.name;
+    name.style.cssText = 'font-size:11px; color:var(--text-1); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; max-width:99px;';
+    card.appendChild(name);
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:4px; width:100%;';
+    const slider = document.createElement('input');
+    slider.type = 'range'; slider.min = '0'; slider.max = '100';
+    slider.value = Math.round(app.volume * 100);
+    slider.style.cssText = 'flex:1; accent-color:var(--accent);';
+    slider.oninput = () => {
+      const vol = parseInt(slider.value) / 100;
+      app.volume = vol;
+      saveAudioApps();
+      invoke('set_app_volume', { pid: app.pid, volume: vol }).catch(() => {});
+    };
+    const label = document.createElement('span');
+    label.textContent = slider.value + '%';
+    label.style.cssText = 'font-size:10px; color:var(--text-4); min-width:28px; text-align:right;';
+    slider.addEventListener('input', () => { label.textContent = slider.value + '%'; });
+    row.appendChild(slider);
+    row.appendChild(label);
+    card.appendChild(row);
+
+    container.appendChild(card);
+  });
+}
+
+window.openAddAudioModal = async function() {
+  document.getElementById('addAudioOverlay').style.display = 'flex';
+  await window.refreshAudioSessions();
+};
+
+window.refreshAudioSessions = async function() {
+  const list = document.getElementById('audioSessionList');
+  if (!list) return;
+  list.innerHTML = '<div style="font-size:12px;color:var(--text-4);padding:8px;">Loading...</div>';
+  try {
+    const sessions = await invoke('get_audio_sessions');
+    if (!sessions || sessions.length === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text-4);padding:8px;">No apps currently playing audio detected.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    sessions.forEach(s => {
+      const alreadyAdded = _audioApps.some(a => a.pid === s.pid);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; padding:8px; border-radius:6px; background:var(--bg-2); cursor:pointer;';
+      row.onmouseenter = () => row.style.background = 'var(--bg-3)';
+      row.onmouseleave = () => row.style.background = 'var(--bg-2)';
+
+      const iconEl = document.createElement('div');
+      iconEl.style.cssText = 'width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;';
+      if (s.icon_base64) {
+        iconEl.innerHTML = `<img src="data:image/png;base64,${s.icon_base64}" style="width:24px;height:24px;object-fit:contain;">`;
+      } else {
+        iconEl.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-4)" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>`;
+      }
+      row.appendChild(iconEl);
+
+      const nameEl = document.createElement('span');
+      nameEl.textContent = s.name;
+      nameEl.style.cssText = 'font-size:12px;color:var(--text-1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      row.appendChild(nameEl);
+
+      if (alreadyAdded) {
+        const badge = document.createElement('span');
+        badge.textContent = 'Added';
+        badge.style.cssText = 'font-size:10px;color:var(--accent);opacity:0.7;';
+        row.appendChild(badge);
+      } else {
+        const addBtn = document.createElement('button');
+        addBtn.textContent = '+ Add';
+        addBtn.className = 'btn btn-primary-modal';
+        addBtn.style.cssText = 'font-size:11px; padding:3px 10px;';
+        addBtn.onclick = (e) => {
+          e.stopPropagation();
+          window.addAudioApp(s.pid, s.name, s.icon_base64, s.volume);
+          addBtn.textContent = '✓ Added';
+          addBtn.disabled = true;
+          addBtn.style.opacity = '0.5';
+        };
+        row.appendChild(addBtn);
+      }
+      list.appendChild(row);
+    });
+  } catch (err) {
+    list.innerHTML = `<div style="font-size:12px;color:#ff5555;padding:8px;">Error: ${err}</div>`;
+  }
+};
+
+window.addAudioApp = function(pid, name, iconBase64, volume) {
+  if (_audioApps.some(a => a.pid === pid)) return;
+  _audioApps.push({ pid, name, iconBase64: iconBase64 || null, volume: volume ?? 1.0 });
+  saveAudioApps();
+  renderAudioApps();
+  invoke('start_app_loopback', { pid, volume: volume ?? 1.0 }).catch(() => {});
+}
+
+window.removeAudioApp = function(pid) {
+  _audioApps = _audioApps.filter(a => a.pid !== pid);
+  saveAudioApps();
+  renderAudioApps();
+  invoke('stop_app_loopback', { pid }).catch(() => {});
+};
+
+window.restoreAudioApps = function() {
+  renderAudioApps();
+  _audioApps.forEach(app => {
+    invoke('start_app_loopback', { pid: app.pid, volume: app.volume }).catch(() => {});
+  });
+};
+
+// Start restoring audio apps on load
+setTimeout(window.restoreAudioApps, 1000);
