@@ -619,20 +619,26 @@ let draggedSoundId = null;
 let rightDragActive = false;
 let rightDragElement = null;
 let rightDragClone = null;
+let isRightDragRendering = false;
 
 document.addEventListener('mousemove', (e) => {
   if (rightDragActive && rightDragClone) {
-    rightDragClone.style.left = (e.clientX - rightDragClone.offsetWidth/2) + 'px';
-    rightDragClone.style.top = (e.clientY - rightDragClone.offsetHeight/2) + 'px';
-    
-    document.querySelectorAll('.sound-button').forEach(b => b.classList.remove('drag-over'));
-    
-    const target = document.elementFromPoint(e.clientX, e.clientY);
-    if (target) {
-      const targetBtn = target.closest('.sound-button');
-      if (targetBtn && targetBtn !== rightDragElement) {
-        targetBtn.classList.add('drag-over');
-      }
+    if (!isRightDragRendering) {
+      isRightDragRendering = true;
+      requestAnimationFrame(() => {
+        rightDragClone.style.transform = `translate(${e.clientX - rightDragClone.offsetWidth/2}px, ${e.clientY - rightDragClone.offsetHeight/2}px)`;
+        
+        document.querySelectorAll('.sound-button').forEach(b => b.classList.remove('drag-over'));
+        
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        if (target) {
+          const targetBtn = target.closest('.sound-button');
+          if (targetBtn && targetBtn !== rightDragElement) {
+            targetBtn.classList.add('drag-over');
+          }
+        }
+        isRightDragRendering = false;
+      });
     }
   }
 });
@@ -724,7 +730,7 @@ async function render() {
       btn.setAttribute('data-sound-id', sound.id);
       
       // -- DRAG AND DROP (Custom Right-Click) --
-      if (currentCategory === 'All' && !searchQuery) {
+      if (!searchQuery) {
         btn.oncontextmenu = (e) => e.preventDefault();
         btn.onmousedown = (e) => {
           if (e.button === 2) { // Right click
@@ -740,8 +746,9 @@ async function render() {
             rightDragClone.style.zIndex = '9999';
             rightDragClone.style.width = btn.offsetWidth + 'px';
             rightDragClone.style.height = btn.offsetHeight + 'px';
-            rightDragClone.style.left = (e.clientX - btn.offsetWidth/2) + 'px';
-            rightDragClone.style.top = (e.clientY - btn.offsetHeight/2) + 'px';
+            rightDragClone.style.left = '0px';
+            rightDragClone.style.top = '0px';
+            rightDragClone.style.transform = `translate(${e.clientX - btn.offsetWidth/2}px, ${e.clientY - btn.offsetHeight/2}px)`;
             document.body.appendChild(rightDragClone);
             
             btn.style.opacity = '0.3';
