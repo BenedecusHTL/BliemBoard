@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -9,7 +9,7 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* â”€â”€â”€ COLOR SYSTEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ COLOR SYSTEM ------------------------------------------─ */
     :root {
       --text-1: oklch(95% 0 0);
       --text-2: oklch(85% 0 0);
@@ -45,7 +45,7 @@
       --title-pink: #ff5ec4;
     }
 
-    /* â”€â”€â”€ BODY & BACKGROUND â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ BODY & BACKGROUND --------------------------------------─ */
     html, body {
       min-height: 100vh;
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -60,7 +60,7 @@
       padding: 2rem 1.5rem 3rem;
     }
 
-    /* â”€â”€â”€ HEADER / TITLE BLOCK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ HEADER / TITLE BLOCK ------------------------------------ */
     .header {
       background: var(--bg-2);
       border: 1px solid var(--border);
@@ -103,7 +103,7 @@
       box-shadow: 0 0 6px oklch(70% 0.12 170 / 0.6);
     }
 
-    /* â”€â”€â”€ CONTROLS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ CONTROLS BAR -------------------------------------------- */
     .controls {
       display: flex;
       gap: 8px;
@@ -207,7 +207,7 @@
       border-color: var(--red-2);
     }
 
-    /* â”€â”€â”€ GRID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ GRID ---------------------------------------------------- */
     .soundboard-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -245,7 +245,7 @@
       transform: translateY(-2px);
     }
 
-    /* â”€â”€ TABS â”€â”€ */
+    /* -- TABS -- */
     .tabs-container {
       display: flex;
       gap: 8px;
@@ -435,7 +435,7 @@
       background: var(--hover);
     }
 
-    /* â”€â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ MODAL ---------------------------------------------------- */
     .edit-overlay {
       position: fixed;
       inset: 0;
@@ -554,7 +554,7 @@
 
     input[type="file"] { display: none; }
 
-    /* â”€â”€â”€ FOOTER INFO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ FOOTER INFO ---------------------------------------------- */
     .info-text {
       font-size: 10px;
       color: var(--text-5);
@@ -567,7 +567,7 @@
       letter-spacing: 0.03em;
     }
 
-    /* â”€â”€â”€ TOAST â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ TOAST ---------------------------------------------------- */
     .toast {
       position: fixed;
       bottom: 1.5rem;
@@ -589,7 +589,7 @@
       from { transform: translateY(12px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
-    /* â”€â”€â”€ VISUALIZER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ VISUALIZER ----------------------------------------------─ */
     .visualizer-wrap {
       background: var(--bg-3);
       border: 1px solid var(--border);
@@ -605,7 +605,7 @@
       height: 100%;
     }
 
-    /* â”€â”€â”€ DROP OVERLAY â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* --─ DROP OVERLAY --------------------------------------------─ */
     #drop-overlay {
       position: fixed;
       inset: 0;
@@ -644,7 +644,7 @@
 
 <div class="container">
 
-  <!-- â”€â”€ HEADER â”€â”€ -->
+  <!-- -- HEADER -- -->
   <div class="header">
       <div class="title-block" id="titleBlock" style="text-align: center; display: flex; align-items: center; justify-content: center; min-height: 100px; max-height: 200px;">
         <canvas id="ascii-canvas" style="display:block; width:100%; height:auto; max-height: 150px; object-fit: contain;"></canvas>
@@ -664,14 +664,14 @@
     </div>
   </div>
 
-  <!-- â”€â”€ VISUALIZER â”€â”€ -->
+  <!-- -- VISUALIZER -- -->
   <div class="visualizer-wrap">
     <canvas id="viz-canvas"></canvas>
   </div>
 
-  <!-- â”€â”€ CONTROLS â”€â”€ -->
+  <!-- -- CONTROLS -- -->
   <div class="controls">
-    <button class="btn-danger" onclick="stopAll()">â–  Stop All</button>
+    <button class="btn-danger" onclick="stopAll()">&#9632; Stop All</button>
     <div class="controls-sep"></div>
     <div class="search-container" style="display:flex; flex:1; min-width:100px; max-width: 250px;">
       <input type="search" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Search sounds..." style="width:100%; background:var(--bg-3); color:var(--text-1); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:12px; outline:none; font-family:inherit;">
@@ -690,10 +690,10 @@
     </button>
   </div>
 
-  <!-- â”€â”€ CATEGORY TABS â”€â”€ -->
+  <!-- -- CATEGORY TABS -- -->
   <div id="categoryTabs" class="tabs-container"></div>
 
-  <!-- â”€â”€ ADDITIONAL AUDIO â”€â”€ -->
+  <!-- -- ADDITIONAL AUDIO -- -->
   <div id="additionalAudioPanel" style="display:block; border-top: 1px solid var(--border); margin-bottom: 12px; padding-top: 12px;">
     <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
       <span style="font-size:11px; color:var(--text-4); letter-spacing:0.05em; font-weight:600; text-transform:uppercase;">Additional Audio</span>
@@ -705,10 +705,10 @@
     <div id="additionalAudioCards" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
   </div>
 
-  <!-- â”€â”€ SOUNDBOARD GRID â”€â”€ -->
+  <!-- -- SOUNDBOARD GRID -- -->
   <div id="soundboard" class="soundboard-grid"></div>
 
-  <!-- â”€â”€ ADD AUDIO APP MODAL â”€â”€ -->
+  <!-- -- ADD AUDIO APP MODAL -- -->
   <div id="addAudioOverlay" class="edit-overlay" style="display:none;">
     <div class="edit-modal" style="width:400px; max-height:80vh;">
       <div class="modal-titlebar">ADD APPLICATION AUDIO</div>
@@ -726,7 +726,7 @@
     </div>
   </div>
 
-  <!-- â”€â”€ SETTINGS OVERLAY â”€â”€ -->
+  <!-- -- SETTINGS OVERLAY -- -->
   <div id="settingsOverlay" class="edit-overlay">
     <div class="edit-modal" style="width: 450px;">
       <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.19</span></div>
@@ -800,7 +800,7 @@
 
 
 
-  <!-- â”€â”€ SOUND SETTINGS MODAL â”€â”€ -->
+  <!-- -- SOUND SETTINGS MODAL -- -->
   <div id="editOverlay" class="edit-overlay">
     <div class="edit-modal">
       <div class="modal-titlebar">SOUND SETTINGS</div>
@@ -821,7 +821,7 @@
         </div>
 
         <div class="modal-header" style="margin-top: 10px;">Image:</div>
-        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">ðŸ–¼ Change Image</button>
+        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">&#128444; Change Image</button>
 
         <div class="modal-header" style="margin-top: 10px;">Hotkey:</div>
         <input type="text" id="editHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
@@ -837,7 +837,7 @@
     </div>
   </div>
 
-  <!-- â”€â”€ CONFIRM OVERLAY â”€â”€ -->
+  <!-- -- CONFIRM OVERLAY -- -->
   <div id="confirmOverlay" class="edit-overlay">
     <div class="edit-modal">
       <div class="modal-titlebar">CONFIRM ACTION</div>
@@ -851,7 +851,7 @@
     </div>
   </div>
 
-  <!-- â”€â”€ MIC PERMISSION OVERLAY â”€â”€ -->
+  <!-- -- MIC PERMISSION OVERLAY -- -->
   <div id="micOverlay" class="edit-overlay">
     <div class="edit-modal">
       <div class="modal-titlebar">MICROPHONE ACCESS</div>
@@ -870,19 +870,19 @@
 
 </div>
 
-<!-- â”€â”€ DROP OVERLAY (outside container, fixed full-screen) â”€â”€ -->
+<!-- -- DROP OVERLAY (outside container, fixed full-screen) -- -->
 <div id="drop-overlay">
   <div class="drop-label">
     DROP AUDIO FILES
-    <small>mp3 Â· wav Â· ogg Â· flac Â· aac Â· mp4</small>
+    <small>mp3 &bull; wav &bull; ogg &bull; flac &bull; aac &bull; mp4</small>
   </div>
 </div>
 
-<!-- â”€â”€ AUDIO EDITOR OVERLAY â”€â”€ -->
+<!-- -- AUDIO EDITOR OVERLAY -- -->
 <div id="audioEditorOverlay" class="edit-overlay" style="display:none;">
   <div class="edit-modal" style="width: min(700px, 96vw); max-width: 700px;">
     <div class="modal-titlebar">
-      âœ‚ï¸ AUDIO EDITOR
+      &#9986; AUDIO EDITOR
       <span id="audioEditorName" style="font-weight:normal; font-size:11px; opacity:0.6; margin-left:8px;"></span>
     </div>
     <div class="modal-body" style="gap: 12px;">
@@ -896,7 +896,7 @@
           box-shadow: 2px 0 8px rgba(0,0,0,0.5);">
           <div style="position:absolute; top:4px; left:3px; background:var(--accent-1);
             color:#000; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
-            white-space:nowrap; pointer-events:none;">â–¶ START</div>
+            white-space:nowrap; pointer-events:none;">&#9654; START</div>
         </div>
         <!-- End handle -->
         <div id="editorHandleEnd" style="
@@ -905,7 +905,7 @@
           box-shadow: -2px 0 8px rgba(0,0,0,0.5);">
           <div style="position:absolute; top:4px; right:3px; background:var(--red-2);
             color:#fff; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
-            white-space:nowrap; pointer-events:none;">END â—€</div>
+            white-space:nowrap; pointer-events:none;">END &#9664;</div>
         </div>
         <!-- Playhead -->
         <div id="editorPlayhead" style="
@@ -921,7 +921,7 @@
       <!-- Time labels -->
       <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-2); padding:0 2px;">
         <span>Start: <b id="editorStartLabel" style="color:var(--accent-1);">0.00s</b></span>
-        <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">â€”</b></span>
+        <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">&mdash;</b></span>
         <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
       </div>
 
@@ -932,10 +932,10 @@
       <div class="modal-buttons" style="margin-top:4px;">
         <button class="btn" onclick="window.closeAudioEditor()">Cancel</button>
         <button class="btn" id="editorPreviewBtn" onclick="window.previewAudioTrim()" style="gap:4px;">
-          â–¶ Preview
+          &#9654; Preview
         </button>
         <button class="btn btn-primary-modal" id="editorSaveBtn" onclick="window.saveAudioTrim()">
-          âœ‚ï¸ Save Trim
+          &#9986; Save Trim
         </button>
       </div>
     </div>
@@ -950,4 +950,3 @@
 <script type="module" src="./main.js"></script>
 </body>
 </html>
-
