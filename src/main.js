@@ -170,7 +170,12 @@ window.addEventListener('DOMContentLoaded', () => {
 ═══════════════════════════════════════════════════════════════ */
 
 listen('app_audio_peak', (event) => {
-  const { pid, peak } = event.payload;
+  const { pid, peak, frames } = event.payload;
+  
+  // If we are receiving ANY event, it means WASAPI capture is active!
+  // Uncomment the next line to debug in DevTools if needed:
+  // console.log(`[Audio Loopback PID ${pid}] Peak: ${peak}, Frames: ${frames}`);
+  
   const viz = document.getElementById(`app-viz-${pid}`);
   if (viz) {
     // Apply a sqrt curve to make lower volumes more visible, scale by ~400
