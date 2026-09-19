@@ -389,8 +389,8 @@ fn set_app_volume(pid: u32, volume: f32) {
 }
 
 #[tauri::command]
-fn start_app_loopback(pid: u32, volume: f32, virtual_output: Option<String>, _state: State<'_, AppState>) {
-    app_audio::start_app_loopback(pid, volume, virtual_output);
+fn start_app_loopback(pid: u32, volume: f32, virtual_output: Option<String>, app: tauri::AppHandle) {
+    app_audio::start_app_loopback(pid, volume, virtual_output, app);
 }
 
 #[tauri::command]
