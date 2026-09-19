@@ -189,7 +189,8 @@ function ensureAudioCtx() {
 async function playSound(soundId) {
   try {
     const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
-    const isPlaying = activeSources.has(soundId);
+    const btn = document.querySelector(`.sound-button[data-sound-id="${soundId}"]`);
+    const isPlaying = btn ? btn.classList.contains('playing') : false;
     
     await invoke('play_sound', { id: soundId, stopOnReclick });
 
@@ -249,9 +250,9 @@ function stopSoundAnalysis(soundId) {
   if (src) {
     try { src.stop(); } catch (_) {}
     activeSources.delete(soundId);
-    const btn = document.querySelector(`.sound-button[data-sound-id="${soundId}"]`);
-    if (btn) btn.classList.remove('playing');
   }
+  const btn = document.querySelector(`.sound-button[data-sound-id="${soundId}"]`);
+  if (btn) btn.classList.remove('playing');
 }
 
 let hasShownMicOverlay = localStorage.getItem('micPermissionGranted') === 'true';
@@ -519,7 +520,7 @@ async function setMasterVolume(value) {
 async function addSound() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = 'audio/*,video/mp4';
+  input.accept = 'audio/*,video/mp4,.ogg,.mp3,.wav';
   input.multiple = true;
   input.onchange = async (e) => {
     for (const file of Array.from(e.target.files || [])) await addFileAsSound(file);
