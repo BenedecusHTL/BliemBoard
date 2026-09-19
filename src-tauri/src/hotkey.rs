@@ -28,8 +28,9 @@ pub fn update_hotkeys(sounds: HashMap<String, SoundAction>, mute: Option<String>
         for (k, v) in sounds {
             upper_sounds.insert(k.to_uppercase(), v);
         }
-        h.sounds = upper_sounds;
-        h.mute = mute.map(|m| m.to_uppercase());
+        h.sounds = upper_sounds.clone();
+        h.mute = mute.clone().map(|m| m.to_uppercase());
+        let _ = std::fs::write(std::env::temp_dir().join("bliemboard_hotkey_registered.log"), format!("Registered Sounds: {:?}, Mute: {:?}", upper_sounds.keys().collect::<Vec<_>>(), mute));
     }
 }
 
@@ -76,9 +77,10 @@ pub fn init() {
 
                             let combo_str = combo.join("+").to_uppercase();
 
-                            // Check against hotkeys
                             if let Ok(h) = HOTKEYS.lock() {
-
+                                let mut keys_list = h.sounds.keys().cloned().collect::<Vec<_>>();
+                                if let Some(ref m) = h.mute { keys_list.push(m.clone()); }
+                                let _ = std::fs::write(std::env::temp_dir().join("bliemboard_hotkey_debug.log"), format!("Pressed: {}, Registered: {:?}\n", combo_str, keys_list));
 
                                 if let Some(ref m) = h.mute {
                                     if m == &combo_str {

@@ -400,7 +400,6 @@ fn stop_app_loopback(pid: u32) {
 
 
 fn main() {
-    hotkey::init();
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
@@ -408,6 +407,7 @@ fn main() {
             Some(vec!["--minimized"]),
         ))
         .setup(|app| {
+            hotkey::init();
             let store = Store::new(app.handle());
             app.manage(AppState {
                 store: Mutex::new(store),
