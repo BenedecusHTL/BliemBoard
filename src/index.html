@@ -1,5 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html la
+    <button class="btn-icon" onclick="openSettings()" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>ng="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -638,6 +644,408 @@
       letter-spacing: 0.06em;
     }
 
+  /* -- TABS -- */
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 15px;
+      margin-bottom: 5px;
+    }
+    .tabs-container::-webkit-scrollbar {
+      height: 4px;
+    }
+    .tabs-container::-webkit-scrollbar-thumb {
+      background: var(--bg-3);
+      border-radius: 2px;
+    }
+    .tab-btn {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover {
+      border-color: var(--accent-2);
+      color: var(--text-1);
+    }
+    .tab-btn.active {
+      background: var(--accent-1);
+      border-color: var(--accent-1);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .sound-button:active {
+      background: var(--active);
+    }
+
+    .sound-button.playing {
+      border-color: var(--gold-2);
+      box-shadow: 0 0 15px rgba(255,215,0,0.1);
+    }
+    
+    .sound-button::before, .sound-button::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 0%;
+      background: var(--gold-2);
+      opacity: 0.15;
+      z-index: 0;
+      transition: none; /* snaps back when not playing */
+      pointer-events: none;
+    }
+    .sound-button::before { left: 0; }
+    .sound-button::after { right: 0; }
+    
+    .sound-button.playing::before, .sound-button.playing::after {
+      width: 50%;
+      transition: width linear var(--duration, 3s);
+    }
+
+    .progress-bar {
+      position: absolute;
+      bottom: 0; left: 0; height: 4px;
+      background: var(--accent-1);
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .sound-button > * { position: relative; z-index: 1; }
+
+    .sound-image {
+      width: 100%; height: 60%;
+      object-fit: cover;
+      margin-bottom: 7px;
+      border-radius: 3px;
+      opacity: 0.85;
+    }
+
+    .sound-label {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: var(--text-3);
+    }
+
+    .sound-button.playing .sound-label { color: var(--accent-1); }
+
+    .playing-tag {
+      display: none;
+      position: absolute;
+      top: 8px; left: 8px;
+      background: var(--accent-2); color: var(--bg-1);
+      padding: 2px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: bold;
+    }
+    .sound-button.playing .playing-tag { display: block; }
+      
+    /* Checkbox Styling */
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    input[type="checkbox"]:checked {
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+    input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 4px;
+      height: 8px;
+      border: solid var(--bg-1);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+    input[type="checkbox"]:hover {
+      border-color: var(--accent-2);
+    }
+
+    /* hover action menu */
+    .button-menu {
+      position: absolute;
+      top: 4px; right: 4px;
+      background: var(--bg-4);
+      border: 1px solid var(--border);
+      padding: 3px 4px;
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s;
+      border-radius: 4px;
+    }
+
+    .sound-button:hover .button-menu {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .icon-btn {
+      width: 20px; height: 20px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: color 0.1s;
+      font-family: inherit;
+      border-radius: 3px;
+    }
+
+    .icon-btn:hover { color: var(--accent-1); background: var(--hover); }
+
+    .add-button {
+      border: 1px dashed var(--border);
+      background: transparent;
+      color: var(--text-5);
+    }
+
+    .add-button:hover {
+      border-color: var(--accent-4);
+      border-style: solid;
+      color: var(--accent-2);
+      background: var(--hover);
+    }
+
+    /* --â”€ MODAL ---------------------------------------------------- */
+    .edit-overlay {
+      position: fixed;
+      inset: 0;
+      background: oklch(0% 0 0 / 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+
+    .edit-overlay.show { display: flex; }
+
+    .edit-modal {
+      background: var(--bg-1);
+      border: 1px solid var(--border-hover);
+      padding: 0;
+      min-width: 320px;
+      max-width: 420px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5);
+    }
+
+    .modal-titlebar {
+      background: color-mix(in oklch, var(--accent-4), transparent 78%);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--accent-1);
+    }
+
+    .modal-body { padding: 16px; }
+
+    .modal-header {
+      font-size: 11px;
+      color: var(--text-4);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-icon {
+      background: transparent;
+      border: none;
+      color: var(--text-2);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 4px;
+      transition: background 0.1s, color 0.1s;
+    }
+    .btn-icon:hover {
+      background: var(--bg-1);
+      color: var(--text-1);
+    }
+
+    .btn {
+      flex: 1;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.05em;
+      transition: all 0.1s;
+      color: var(--text-3);
+      border-radius: 4px;
+    }
+
+    .btn:hover {
+      border-color: var(--text-5);
+      background: var(--hover);
+    }
+
+    .btn-primary-modal {
+      color: var(--accent-1);
+      border-color: var(--accent-5);
+    }
+
+    .btn-primary-modal:hover {
+      background: color-mix(in oklch, var(--accent-3), transparent 75%);
+      border-color: var(--accent-2);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-4);
+      color: var(--accent-1);
+      font-family: inherit;
+      font-size: 12px;
+      margin-bottom: 4px;
+      caret-color: var(--accent-1);
+      outline: none;
+      box-sizing: border-box;
+      border-radius: 4px;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent-4);
+      box-shadow: 0 0 0 2px color-mix(in oklch, var(--accent-3), transparent 80%);
+    }
+
+    input[type="file"] { display: none; }
+
+    /* --â”€ FOOTER INFO ---------------------------------------------- */
+    .info-text {
+      font-size: 10px;
+      color: var(--text-5);
+      line-height: 1.8;
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-top: none;
+      padding: 8px 14px;
+      border-radius: 0 0 6px 6px;
+      letter-spacing: 0.03em;
+    }
+
+    /* --â”€ TOAST ---------------------------------------------------- */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-1);
+      border: 1px solid var(--accent-4);
+      color: var(--accent-1);
+      padding: 9px 16px;
+      font-size: 11px;
+      font-family: inherit;
+      letter-spacing: 0.05em;
+      z-index: 2000;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px oklch(0% 0 0 / 0.4);
+      animation: slideIn 0.15s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    /* --â”€ VISUALIZER ----------------------------------------------â”€ */
+    .visualizer-wrap {
+      background: var(--bg-3);
+      border: 1px solid var(--border);
+      border-top: none;
+      height: 52px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #viz-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* --â”€ DROP OVERLAY --------------------------------------------â”€ */
+    #drop-overlay {
+      position: fixed;
+      inset: 0;
+      background: oklch(12% 0.04 205 / 0.85);
+      border: 3px dashed var(--title-cyan);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 5000;
+      pointer-events: none;
+      backdrop-filter: blur(2px);
+    }
+
+    #drop-overlay.show { display: flex; }
+
+    .drop-label {
+      font-size: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--title-cyan);
+      letter-spacing: 0.12em;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .drop-label small {
+      display: block;
+      font-size: 11px;
+      color: var(--text-4);
+      margin-top: 8px;
+      letter-spacing: 0.06em;
+    }
+
+  
+    /* -- MODAL SETTINGS FIX -- */
+    .modal-overlay {
+      position: fixed; inset: 0; background: oklch(0% 0 0 / 0.65);
+      display: none; align-items: center; justify-content: center;
+      z-index: 1000; backdrop-filter: blur(4px);
+    }
+    .modal-overlay.show { display: flex; }
+  
   </style>
 </head>
 <body>
@@ -653,7 +1061,7 @@
     </div>
     <div class="header-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
       <div style="flex: 1; text-align: left;">
-        <span class="version">v1.0.33</span>
+        <span class="version">v1.0.34</span>
       </div>
       <div style="flex: 1; text-align: center;">
         <span id="mutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 0 4px; border-radius: 3px; font-size: 10px;">MUTED</span>
@@ -821,10 +1229,7 @@
         </div>
 
         <div class="modal-header" style="margin-top: 10px;">Image:</div>
-        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          Change Image
-        </button>
+        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">&#128444; Change Image</button>
 
         <div class="modal-header" style="margin-top: 10px;">Hotkey:</div>
         <input type="text" id="editHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
@@ -881,206 +1286,67 @@
   </div>
 </div>
 
-      
-
-    <!-- -- CONTROLS -- -->
-    <div class="controls">
-      <button class="btn-danger" onclick="stopAll()" style="color:var(--text-1);">
-        <span style="color:var(--red-1); font-size:16px;">&#9632;</span> Stop All
-      </button>
-      <div class="controls-sep"></div>
-      <div class="search-container" style="display:flex; flex:1; min-width:100px; max-width: 250px;">
-        <input type="search" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Search sounds..." style="width:100%; background:var(--bg-3); color:var(--text-1); border:1px solid var(--border); border-radius:4px; padding:4px 8px; font-size:12px; outline:none; font-family:inherit;">
-      </div>
-      <div style="flex:1;"></div>
-      <div class="master-vol" style="display:flex; align-items:center; gap:8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
-        <input type="range" id="masterVol" min="0" max="100" value="70" oninput="setMasterVolume(this.value)">
-      </div>
-      <div class="controls-sep"></div>
-      <button class="icon-btn" onclick="openSettings()" title="Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-      </button>
+<!-- -- AUDIO EDITOR OVERLAY -- -->
+<div id="audioEditorOverlay" class="edit-overlay" style="display:none;">
+  <div class="edit-modal" style="width: min(700px, 96vw); max-width: 700px;">
+    <div class="modal-titlebar">
+      &#9986; AUDIO EDITOR
+      <span id="audioEditorName" style="font-weight:normal; font-size:11px; opacity:0.6; margin-left:8px;"></span>
     </div>
+    <div class="modal-body" style="gap: 12px;">
+      <!-- Waveform canvas -->
+      <div style="position:relative; background:var(--bg-3); border-radius:6px; overflow:hidden; border:1px solid var(--border);">
+        <canvas id="editorWaveform" style="display:block; width:100%; height:120px; cursor:crosshair;"></canvas>
+        <!-- Start handle -->
+        <div id="editorHandleStart" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--accent-1); cursor:ew-resize; left:0%;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; left:3px; background:var(--accent-1);
+            color:#000; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">&#9654; START</div>
+        </div>
+        <!-- End handle -->
+        <div id="editorHandleEnd" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--red-2); cursor:ew-resize; right:0%; left:unset;
+          box-shadow: -2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; right:3px; background:var(--red-2);
+            color:#fff; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">END &#9664;</div>
+        </div>
+        <!-- Playhead -->
+        <div id="editorPlayhead" style="
+          position:absolute; top:0; bottom:0; width:2px;
+          background:rgba(255,255,255,0.6); pointer-events:none; display:none; left:0%;"></div>
+        <!-- Dim region outside selection -->
+        <div id="editorDimLeft" style="
+          position:absolute; top:0; bottom:0; left:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+        <div id="editorDimRight" style="
+          position:absolute; top:0; bottom:0; right:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+      </div>
 
-    <!-- -- CATEGORY TABS -- -->
-    <div id="categoryTabs" class="tabs-container"></div>
+      <!-- Time labels -->
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-2); padding:0 2px;">
+        <span>Start: <b id="editorStartLabel" style="color:var(--accent-1);">0.00s</b></span>
+        <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">&mdash;</b></span>
+        <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
+      </div>
 
-    <!-- -- ADDITIONAL AUDIO -- -->
-    <div id="additionalAudioPanel" style="display:block; border-top: 1px solid var(--border); margin-bottom: 12px; padding-top: 12px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom: 10px;">
-        <span style="font-size:11px; color:var(--text-4); letter-spacing:0.05em; font-weight:600; text-transform:uppercase;">Additional Audio</span>
-        <button class="tab-btn" id="addAudioBtn" onclick="openAddAudioModal()" style="padding: 3px 8px; font-size:11px; line-height:1;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add App
+      <!-- Loading / error state -->
+      <div id="editorStatus" style="font-size:12px; color:var(--text-2); text-align:center; min-height:16px;"></div>
+
+      <!-- Buttons -->
+      <div class="modal-buttons" style="margin-top:4px;">
+        <button class="btn" onclick="window.closeAudioEditor()">Cancel</button>
+        <button class="btn" id="editorPreviewBtn" onclick="window.previewAudioTrim()" style="gap:4px;">
+          &#9654; Preview
+        </button>
+        <button class="btn btn-primary-modal" id="editorSaveBtn" onclick="window.saveAudioTrim()">
+          &#9986; Save Trim
         </button>
       </div>
-      <div id="additionalAudioCards" style="display:flex; flex-wrap:wrap; gap:10px;"></div>
     </div>
-
-    <!-- -- SOUND GRID -- -->
-    <div id="soundGrid" class="sound-grid"></div>
-
-  </div>
-
-  <!-- -- SETTINGS MODAL -- -->
-  <div id="settingsOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 style="font-size: 16px; margin: 0; font-weight: 600;">Settings</h2>
-        <button class="icon-btn" onclick="closeSettings()">&times;</button>
-      </div>
-      <div style="display:flex; flex-direction:column; gap: 16px;">
-        <div>
-          <label style="display:block; font-size:12px; color:var(--text-3); margin-bottom:4px;">Microphone Input:</label>
-          <select id="micSelect" class="form-input"></select>
-          <div style="font-size:10px; color:var(--text-4); margin-top:4px;">
-            Select your real microphone. This allows you to use your mic inside games while passing it through the soundboard cable.
-          </div>
-        </div>
-        <div style="display:flex; align-items:center; gap: 8px;">
-          <input type="checkbox" id="testMicBtn" onchange="window.toggleTestMic(this.checked)">
-          <label for="testMicBtn" style="font-size:12px; color:var(--text-2); cursor:pointer;">Listen to my microphone</label>
-        </div>
-        <div style="display:flex; align-items:center; gap: 8px;">
-          <input type="checkbox" id="localPlaybackBtn" onchange="window.toggleLocalPlayback(this.checked)">
-          <label for="localPlaybackBtn" style="font-size:12px; color:var(--text-2); cursor:pointer;">Hear sounds through my speakers</label>
-        </div>
-        <div style="display:flex; align-items:center; gap: 8px;">
-          <input type="checkbox" id="stopOnReclickBtn" onchange="window.toggleStopOnReclick(this.checked)">
-          <label for="stopOnReclickBtn" style="font-size:12px; color:var(--text-2); cursor:pointer;">Stop sound completely if clicked while playing</label>
-        </div>
-      </div>
-      <div class="modal-buttons">
-        <button class="btn" onclick="closeSettings()">Done</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- -- ADD/EDIT SOUND MODAL -- -->
-  <div id="addOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="modalTitle" style="font-size: 16px; margin: 0; font-weight: 600;">Add Sound</h2>
-        <button class="icon-btn" onclick="closeAdd()">&times;</button>
-      </div>
-      <div style="display:flex; flex-direction:column; gap: 12px;">
-        <input type="hidden" id="editId">
-        
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div id="imagePreview" style="width: 60px; height: 60px; background: var(--bg-1); border-radius: 8px; display:flex; align-items:center; justify-content:center; border: 1px solid var(--border); overflow:hidden;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-4)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          </div>
-          <div style="flex:1;">
-            <label class="form-label">Thumbnail Image (Optional)</label>
-            <input type="file" id="imageInput" class="form-input" accept="image/*" style="padding: 6px;">
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">Sound File</label>
-          <input type="file" id="fileInput" class="form-input" accept="audio/*" style="padding: 6px;">
-        </div>
-        
-        <div>
-          <label class="form-label">Name</label>
-          <input type="text" id="nameInput" class="form-input" placeholder="e.g. Bruh Effect">
-        </div>
-        
-        <div>
-          <label class="form-label">Category (Optional)</label>
-          <input type="text" id="categoryInput" class="form-input" placeholder="e.g. Memes, Weapons, Voice lines">
-        </div>
-
-        <div>
-          <label class="form-label">Individual Volume</label>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <input type="range" id="volumeInput" min="0" max="200" value="100" style="flex:1;">
-            <span id="volumeValue" style="width:36px; text-align:right; font-size:12px; color:var(--text-3);">100%</span>
-          </div>
-        </div>
-        
-        <div>
-          <label class="form-label">Hotkey (Optional)</label>
-          <button id="hotkeyBtn" class="form-input" style="text-align:left; color:var(--text-2); cursor:pointer;">
-            Click to assign shortcut...
-          </button>
-        </div>
-
-        <button class="btn-danger" id="deleteBtn" style="display:none; align-self:flex-start; margin-top:8px;" onclick="window.deleteSound(document.getElementById('editId').value)">Delete Sound</button>
-      </div>
-      <div class="modal-buttons" style="margin-top:20px;">
-        <button class="btn" onclick="closeAdd()">Cancel</button>
-        <button class="btn btn-primary-modal" id="saveBtn" onclick="saveSound()">Save Sound</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- -- AUDIO EDITOR OVERLAY -- -->
-  <div id="audioEditorOverlay" class="edit-overlay" style="display:none;">
-    <div class="edit-modal" style="width: min(700px, 96vw); max-width: 700px;">
-      <div class="modal-titlebar">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-        AUDIO EDITOR
-        <span id="audioEditorName" style="font-weight:normal; font-size:11px; opacity:0.6; margin-left:8px;"></span>
-      </div>
-      <div class="modal-body" style="gap: 12px;">
-        <!-- Waveform canvas -->
-        <div style="position:relative; background:var(--bg-3); border-radius:6px; overflow:hidden; border:1px solid var(--border);">
-          <canvas id="editorWaveform" style="display:block; width:100%; height:120px; cursor:crosshair;"></canvas>
-          <!-- Start handle -->
-          <div id="editorHandleStart" style="
-            position:absolute; top:0; bottom:0; width:3px;
-            background:var(--accent-1); cursor:ew-resize; left:0%;
-            transform: translateX(2px);
-            box-shadow: 2px 0 8px rgba(0,0,0,0.5);">
-            <div style="position:absolute; top:4px; left:3px; background:var(--accent-1);
-              color:#000; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
-              white-space:nowrap; pointer-events:none;">&#9654; START</div>
-          </div>
-          <!-- End handle -->
-          <div id="editorHandleEnd" style="
-            position:absolute; top:0; bottom:0; width:3px;
-            background:var(--red-2); cursor:ew-resize; right:0%; left:unset;
-            transform: translateX(-2px);
-            box-shadow: -2px 0 8px rgba(0,0,0,0.5);">
-            <div style="position:absolute; top:4px; right:3px; background:var(--red-2);
-              color:#fff; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
-              white-space:nowrap; pointer-events:none;">END &#9664;</div>
-          </div>
-          <!-- Playhead -->
-          <div id="editorPlayhead" style="
-            position:absolute; top:0; bottom:0; width:2px;
-            background:rgba(255,255,255,0.6); pointer-events:none; display:none; left:0%;"></div>
-          <!-- Dim region outside selection -->
-          <div id="editorDimLeft" style="
-            position:absolute; top:0; bottom:0; left:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
-          <div id="editorDimRight" style="
-            position:absolute; top:0; bottom:0; right:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
-        </div>
-
-        <!-- Time labels -->
-        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-2); padding:0 2px;">
-          <span>Start: <b id="editorStartLabel" style="color:var(--accent-1);">0.00s</b></span>
-          <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">&mdash;</b></span>
-          <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
-        </div>
-
-        <!-- Loading / error state -->
-        <div id="editorStatus" style="font-size:12px; color:var(--text-2); text-align:center; min-height:16px;"></div>
-
-        <!-- Buttons -->
-        <div class="modal-buttons" style="margin-top:4px;">
-          <button class="btn" onclick="window.closeAudioEditor()">Cancel</button>
-          <button class="btn" id="editorPreviewBtn" onclick="window.previewAudioTrim()" style="gap:4px;">
-            &#9654; Preview
-          </button>
-          <button class="btn btn-primary-modal" id="editorSaveBtn" onclick="window.saveAudioTrim()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>
-            Save Trim
-          </button>
-        </div>
-      </div></div>
   </div>
 </div>
 
@@ -1092,6 +1358,4 @@
 <script type="module" src="./main.js"></script>
 </body>
 </html>
-
-
 
