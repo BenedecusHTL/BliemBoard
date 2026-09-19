@@ -335,12 +335,13 @@ unsafe fn run_loopback_thread(
     if audio_client.SetEventHandle(ready_event).is_err() { let _ = CloseHandle(ready_event); return; }
     if audio_client.Start().is_err() { let _ = CloseHandle(ready_event); return; }
 
-    // We just create the ringbuffer and send it to audio.rs via AUDIO_SENDER.
     let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split();
     
     let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels));
 
     let mut last_emit = std::time::Instant::now();
+    let mut accumulated_peak: f32 = 0.0;
+    let mut total_frames_captured: u64 = 0;
 
     loop {
         if stop_rx.try_recv().is_ok() { break; }
@@ -353,6 +354,8 @@ unsafe fn run_loopback_thread(
             if capture_client.GetBuffer(&mut p_data, &mut num_frames, &mut flags, None, None).is_err() || num_frames == 0 { break; }
             let vol = *volume.lock().unwrap();
             let total = num_frames as usize * channels as usize;
+            total_frames_captured += num_frames as u64;
+            
             let samples: Vec<f32> = if (flags & 2) != 0 {
                 vec![0f32; total]
             } else if bits == 32 {
@@ -362,16 +365,16 @@ unsafe fn run_loopback_thread(
             } else { vec![0f32; total] };
             let _ = capture_client.ReleaseBuffer(num_frames);
             
-            let mut local_peak: f32 = 0.0;
             for s in samples { 
                 let abs = s.abs();
-                if abs > local_peak { local_peak = abs; }
+                if abs > accumulated_peak { accumulated_peak = abs; }
                 let _ = prod.try_push(s); 
             }
             
             if last_emit.elapsed().as_millis() > 50 {
-                let _ = app.emit("app_audio_peak", serde_json::json!({ "pid": pid, "peak": local_peak }));
+                let _ = app.emit("app_audio_peak", serde_json::json!({ "pid": pid, "peak": accumulated_peak, "frames": total_frames_captured }));
                 last_emit = std::time::Instant::now();
+                accumulated_peak = 0.0;
             }
         }
     }
