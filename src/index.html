@@ -1138,9 +1138,14 @@
       <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.34</span></div>
       <div class="modal-body">
         
-        <div class="modal-header">Audio Routing (Virtual Cable):</div>
+        <div class="modal-header">Pass-through Microphone (Input):</div>
         <select id="micSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setMic(this.value)">
-          <option value="">Loading devices...</option>
+          <option value="">No Microphone</option>
+        </select>
+        
+        <div class="modal-header">Virtual Cable (Output to Discord):</div>
+        <select id="outSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setVirtualOutput(this.value)">
+          <option value="">No Virtual Cable</option>
         </select>
         
         <div style="margin-bottom: 25px; display:flex; flex-direction:column; gap:8px;">

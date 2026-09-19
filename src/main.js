@@ -950,6 +950,17 @@ window.triggerDeleteSound = function() {
   }
 };
 
+window.setVirtualOutput = async function(name) {
+  try {
+    await invoke('set_output_device', { name: name || null });
+    if (name) {
+      localStorage.setItem('virtualOutput', name);
+    } else {
+      localStorage.removeItem('virtualOutput');
+    }
+  } catch (e) { console.error('Error setting virtual output:', e); }
+};
+
 window.setMic = async function(name) {
   try {
     await invoke('set_input_device', { name: name || null });
@@ -1098,6 +1109,22 @@ window.toggleAutoStart = async function(checked) {
     if (savedMic && [...sel.options].some(o => o.value === savedMic)) {
       sel.value = savedMic;
       await window.setMic(savedMic);
+    }
+    
+    // Populate virtual output list
+    const outs = await invoke('get_output_devices');
+    const outSel = document.getElementById('outSelect');
+    [...new Set(outs)].forEach(out => {
+      const opt = document.createElement('option');
+      opt.value = out; opt.textContent = out;
+      outSel.appendChild(opt);
+    });
+    
+    // Restore saved virtual output
+    const savedOut = localStorage.getItem('virtualOutput');
+    if (savedOut && [...outSel.options].some(o => o.value === savedOut)) {
+      outSel.value = savedOut;
+      await window.setVirtualOutput(savedOut);
     }
 
     // Restore test mic state

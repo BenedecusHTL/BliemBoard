@@ -235,6 +235,11 @@ fn set_volume(volume: f32) {
 }
 
 #[tauri::command]
+fn set_output_device(name: Option<String>) {
+    audio::set_output_device(name);
+}
+
+#[tauri::command]
 fn get_output_devices() -> Vec<String> {
     audio::get_output_devices()
 }
@@ -490,6 +495,7 @@ fn main() {
             open_url,
             download_and_install_update,
             set_volume,
+            set_output_device,
             get_output_devices,
             get_input_devices,
             set_input_device,
