@@ -340,17 +340,32 @@ unsafe fn run_loopback_thread(
         None => { dlog!("IAudioClient slot empty (timeout?)"); return; }
     };
 
-    let mix_fmt = match audio_client.GetMixFormat() { Ok(p) => p, Err(e) => { dlog!("GetMixFormat failed: {:?}", e); return; } };
-    let sample_rate = (*mix_fmt).nSamplesPerSec;
-    let channels = (*mix_fmt).nChannels;
-    let bits = (*mix_fmt).wBitsPerSample;
-    dlog!("Format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
+    let sample_rate: u32 = 44100;
+    let channels: u16 = 2;
+    let bits: u16 = 16;
 
-    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK, 200_000, 0, mix_fmt, None) {
+    let wfx = WAVEFORMATEX {
+        wFormatTag: 1, // WAVE_FORMAT_PCM
+        nChannels: channels,
+        nSamplesPerSec: sample_rate,
+        nAvgBytesPerSec: sample_rate * (channels as u32) * (bits as u32 / 8),
+        nBlockAlign: channels * (bits / 8),
+        wBitsPerSample: bits,
+        cbSize: 0,
+    };
+    dlog!("Using fixed format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
+
+    if let Err(e) = audio_client.Initialize(
+        AUDCLNT_SHAREMODE_SHARED,
+        AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+        200_000,
+        0,
+        &wfx,
+        None,
+    ) {
         dlog!("Initialize failed: {:?}", e);
-        CoTaskMemFree(Some(mix_fmt as _)); return;
+        return;
     }
-    CoTaskMemFree(Some(mix_fmt as _));
 
     let capture_client: IAudioCaptureClient = match audio_client.GetService() { Ok(c) => c, Err(e) => { dlog!("GetService failed: {:?}", e); return; } };
     let ready_event = match CreateEventW(None, false, false, None) { Ok(e) => e, Err(_) => return };
@@ -361,6 +376,11 @@ unsafe fn run_loopback_thread(
     
     let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split();
     
+    // Prefill buffer with ~50ms silence to prevent drift crackles
+    for _ in 0..4410 {
+        let _ = prod.try_push(0.0);
+    }
+
     let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels));
 
     let mut last_emit = std::time::Instant::now();
@@ -377,6 +397,9 @@ unsafe fn run_loopback_thread(
             continue; 
         }
         loop {
+            let packet = capture_client.GetNextPacketSize().unwrap_or(0);
+            if packet == 0 { break; }
+
             let mut p_data: *mut u8 = std::ptr::null_mut();
             let mut num_frames: u32 = 0;
             let mut flags: u32 = 0;
@@ -384,19 +407,17 @@ unsafe fn run_loopback_thread(
                 dlog!("GetBuffer failed: {:?}", e);
                 break;
             }
-            if num_frames == 0 { break; }
             
-            let vol = *volume.lock().unwrap();
             let total = num_frames as usize * channels as usize;
             total_frames_captured += num_frames as u64;
             
-            let samples: Vec<f32> = if (flags & 2) != 0 {
+            let samples: Vec<f32> = if (flags & 2) != 0 || p_data.is_null() {
                 vec![0f32; total]
-            } else if bits == 32 {
-                std::slice::from_raw_parts(p_data as *const f32, total).iter().map(|&s| s * vol).collect()
-            } else if bits == 16 {
-                std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0 * vol).collect()
-            } else { vec![0f32; total] };
+            } else {
+                // Fixed format is 16-bit PCM, no volume scaling (already applied by Windows mix)
+                std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0).collect()
+            };
+            
             let _ = capture_client.ReleaseBuffer(num_frames);
             
             for s in samples { 

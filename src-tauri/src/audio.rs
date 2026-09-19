@@ -149,21 +149,26 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
         for cmd in rx {
             match cmd {
                 AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels) => {
-                    if let Some(h2) = &handle2 {
-                        if let Ok(sink) = Sink::try_new(h2) {
-                            let source = crate::app_audio::LoopbackSource {
-                                consumer: cons,
-                                sample_rate,
-                                channels,
-                            };
-                            sink.append(source);
-                            let currently_muted = is_muted.load(Ordering::Relaxed);
-                            if currently_muted {
-                                sink.set_volume(0.0);
-                            } else {
-                                sink.set_volume(master_volume);
+                    match &handle2 {
+                        Some(h2) => {
+                            if let Ok(sink) = Sink::try_new(h2) {
+                                let source = crate::app_audio::LoopbackSource {
+                                    consumer: cons,
+                                    sample_rate,
+                                    channels,
+                                };
+                                sink.append(source);
+                                let currently_muted = is_muted.load(Ordering::Relaxed);
+                                if currently_muted {
+                                    sink.set_volume(0.0);
+                                } else {
+                                    sink.set_volume(master_volume);
+                                }
+                                app_loopback_sinks.insert(pid, sink);
                             }
-                            app_loopback_sinks.insert(pid, sink);
+                        }
+                        None => {
+                            let _ = std::fs::write(std::env::temp_dir().join("loopback_err.txt"), format!("AddAppLoopback: kein Virtual-Cable-Output aktiv für PID {}", pid));
                         }
                     }
                 }
@@ -282,6 +287,7 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                     stream2 = None;
                     handle2 = None;
                     sinks.clear();
+                    app_loopback_sinks.clear();
 
                     if let Some(dev) = default_device {
                         if let Ok((s, h)) = OutputStream::try_from_device(&dev) {
