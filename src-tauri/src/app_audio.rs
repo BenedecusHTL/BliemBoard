@@ -321,7 +321,7 @@ unsafe fn run_loopback_thread(
         result: result_slot.clone(),
     }.into();
 
-    let guid_str = windows_core::w!("{2eef81be-33fa-4800-9670-1cd474972c3f}");
+    let guid_str = windows_core::w!("VAD\\Process_Loopback");
 
     dlog!("Calling ActivateAudioInterfaceAsync...");
     if let Err(e) = ActivateAudioInterfaceAsync(guid_str, &IAudioClient::IID, Some(prop_var), &handler) {
@@ -346,7 +346,7 @@ unsafe fn run_loopback_thread(
     let bits = (*mix_fmt).wBitsPerSample;
     dlog!("Format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
 
-    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200_000, 0, mix_fmt, None) {
+    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_LOOPBACK, 200_000, 0, mix_fmt, None) {
         dlog!("Initialize failed: {:?}", e);
         CoTaskMemFree(Some(mix_fmt as _)); return;
     }
