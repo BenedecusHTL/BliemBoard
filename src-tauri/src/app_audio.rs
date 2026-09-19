@@ -346,7 +346,7 @@ unsafe fn run_loopback_thread(
     let bits = (*mix_fmt).wBitsPerSample;
     dlog!("Format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
 
-    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200_000, 0, mix_fmt, None) {
+    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200_000, 0, mix_fmt, None) {
         dlog!("Initialize failed: {:?}", e);
         CoTaskMemFree(Some(mix_fmt as _)); return;
     }
