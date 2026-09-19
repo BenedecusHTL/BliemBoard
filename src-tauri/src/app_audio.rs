@@ -280,6 +280,18 @@ unsafe fn run_loopback_thread(
     stop_rx: std::sync::mpsc::Receiver<()>,
     app: tauri::AppHandle,
 ) {
+    use std::io::Write;
+    let mut log_file = std::fs::OpenOptions::new().create(true).append(true).open("debug_loopback.txt").ok();
+    macro_rules! dlog {
+        ($($arg:tt)*) => {
+            if let Some(ref mut f) = log_file {
+                let _ = writeln!(f, $($arg)*);
+            }
+        }
+    }
+
+    dlog!("Starting loopback for PID {}", pid);
+
     let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
 
     let activation_params = AUDIOCLIENT_ACTIVATION_PARAMS {
@@ -301,7 +313,7 @@ unsafe fn run_loopback_thread(
     };
     let prop_var: &PROPVARIANT = &*((&blob as *const BlobPV) as *const PROPVARIANT);
 
-    let done_event = match CreateEventW(None, false, false, None) { Ok(e) => e, Err(_) => return };
+    let done_event = match CreateEventW(None, false, false, None) { Ok(e) => e, Err(e) => { dlog!("CreateEventW failed: {:?}", e); return; } };
     let result_slot: Arc<Mutex<Option<windows_core::Result<IAudioClient>>>> = Arc::new(Mutex::new(None));
 
     let handler: IActivateAudioInterfaceCompletionHandler = completion::CompletionHandler {
@@ -311,30 +323,42 @@ unsafe fn run_loopback_thread(
 
     let guid_str = windows_core::w!("{2eef81be-33fa-4800-9670-1cd474972c3f}");
 
-    if ActivateAudioInterfaceAsync(guid_str, &IAudioClient::IID, Some(prop_var), &handler).is_err() {
+    dlog!("Calling ActivateAudioInterfaceAsync...");
+    if let Err(e) = ActivateAudioInterfaceAsync(guid_str, &IAudioClient::IID, Some(prop_var), &handler) {
+        dlog!("ActivateAudioInterfaceAsync failed: {:?}", e);
         let _ = CloseHandle(done_event); return;
     }
-    WaitForSingleObject(done_event, 5000);
+    
+    let wait_res = WaitForSingleObject(done_event, 5000);
+    dlog!("WaitForSingleObject result: {:?}", wait_res);
     let _ = CloseHandle(done_event);
     drop(handler);
 
-    let audio_client = match result_slot.lock().unwrap().take() { Some(Ok(c)) => c, _ => return };
+    let audio_client = match result_slot.lock().unwrap().take() { 
+        Some(Ok(c)) => { dlog!("Got IAudioClient"); c }, 
+        Some(Err(e)) => { dlog!("IAudioClient result err: {:?}", e); return; },
+        None => { dlog!("IAudioClient slot empty (timeout?)"); return; }
+    };
 
-    let mix_fmt = match audio_client.GetMixFormat() { Ok(p) => p, Err(_) => return };
+    let mix_fmt = match audio_client.GetMixFormat() { Ok(p) => p, Err(e) => { dlog!("GetMixFormat failed: {:?}", e); return; } };
     let sample_rate = (*mix_fmt).nSamplesPerSec;
     let channels = (*mix_fmt).nChannels;
     let bits = (*mix_fmt).wBitsPerSample;
+    dlog!("Format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
 
-    if audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200_000, 0, mix_fmt, None).is_err() {
+    if let Err(e) = audio_client.Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK, 200_000, 0, mix_fmt, None) {
+        dlog!("Initialize failed: {:?}", e);
         CoTaskMemFree(Some(mix_fmt as _)); return;
     }
     CoTaskMemFree(Some(mix_fmt as _));
 
-    let capture_client: IAudioCaptureClient = match audio_client.GetService() { Ok(c) => c, Err(_) => return };
+    let capture_client: IAudioCaptureClient = match audio_client.GetService() { Ok(c) => c, Err(e) => { dlog!("GetService failed: {:?}", e); return; } };
     let ready_event = match CreateEventW(None, false, false, None) { Ok(e) => e, Err(_) => return };
-    if audio_client.SetEventHandle(ready_event).is_err() { let _ = CloseHandle(ready_event); return; }
-    if audio_client.Start().is_err() { let _ = CloseHandle(ready_event); return; }
+    if let Err(e) = audio_client.SetEventHandle(ready_event) { dlog!("SetEventHandle failed: {:?}", e); let _ = CloseHandle(ready_event); return; }
+    if let Err(e) = audio_client.Start() { dlog!("Start failed: {:?}", e); let _ = CloseHandle(ready_event); return; }
 
+    dlog!("Capture started successfully!");
+    
     let mut rb = HeapRb::<f32>::new(16384); let (mut prod, cons) = rb.split();
     
     let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels));
@@ -342,16 +366,26 @@ unsafe fn run_loopback_thread(
     let mut last_emit = std::time::Instant::now();
     let mut accumulated_peak: f32 = 0.0;
     let mut total_frames_captured: u64 = 0;
+    let mut loop_count = 0;
 
     loop {
-        if stop_rx.try_recv().is_ok() { break; }
+        if stop_rx.try_recv().is_ok() { dlog!("Stop signal received"); break; }
         let w = WaitForSingleObject(ready_event, 50);
-        if w == WAIT_TIMEOUT { continue; }
+        if w == WAIT_TIMEOUT { 
+            loop_count += 1;
+            if loop_count % 100 == 0 { dlog!("Wait timeout x100..."); }
+            continue; 
+        }
         loop {
             let mut p_data: *mut u8 = std::ptr::null_mut();
             let mut num_frames: u32 = 0;
             let mut flags: u32 = 0;
-            if capture_client.GetBuffer(&mut p_data, &mut num_frames, &mut flags, None, None).is_err() || num_frames == 0 { break; }
+            if let Err(e) = capture_client.GetBuffer(&mut p_data, &mut num_frames, &mut flags, None, None) {
+                dlog!("GetBuffer failed: {:?}", e);
+                break;
+            }
+            if num_frames == 0 { break; }
+            
             let vol = *volume.lock().unwrap();
             let total = num_frames as usize * channels as usize;
             total_frames_captured += num_frames as u64;
