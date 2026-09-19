@@ -1636,3 +1636,37 @@ window.restoreAudioApps = function() {
 
 // Start restoring audio apps on load
 setTimeout(window.restoreAudioApps, 1000);
+
+// --- LOCAL HOTKEY HANDLER (When app is focused) ---
+window.addEventListener('keydown', async (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  let keys = [];
+  if (e.ctrlKey || e.metaKey) keys.push('CommandOrControl');
+  if (e.altKey) keys.push('Alt');
+  if (e.shiftKey) keys.push('Shift');
+  
+  if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+
+  let key = e.key.toUpperCase();
+  if (key === ' ') key = 'Space';
+  else if (key.length === 1 && key.match(/[A-Z0-9]/)) key = key;
+  else if (key.startsWith('Arrow')) key = key.replace('Arrow', '').toUpperCase();
+  keys.push(key);
+  
+  const combo = keys.join('+');
+
+  const muteHk = localStorage.getItem('muteHotkey');
+  if (muteHk === combo) {
+    e.preventDefault();
+    await invoke('toggle_mute');
+    return;
+  }
+
+  const sounds = await invoke('get_sounds');
+  const matchedSound = sounds.find(s => s.hotkey === combo);
+  if (matchedSound) {
+    e.preventDefault();
+    playSound(matchedSound.id);
+  }
+});
