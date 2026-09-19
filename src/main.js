@@ -143,15 +143,15 @@ function restoreCustomizations() {
     window.toggleHideMeta(hideMeta);
 
     const stopOnReclick = localStorage.getItem('stopOnReclick') === '1';
-    if(document.getElementById('stopOnReclickBtn')) document.getElementById('stopOnReclickBtn').checked = stopOnReclick;
+    if(document.getElementById('stopOnReclickCheckbox')) document.getElementById('stopOnReclickCheckbox').checked = stopOnReclick;
 
     const masterVolume = localStorage.getItem('masterVolume');
     if (masterVolume !== null) {
-      const volSlider = document.getElementById('volumeSlider');
-      if (volSlider) {
-        volSlider.value = masterVolume;
-        window.setMasterVolume(masterVolume);
-      }
+      const volSlider1 = document.getElementById('masterVolume');
+      const volSlider2 = document.getElementById('masterVol');
+      if (volSlider1) volSlider1.value = masterVolume;
+      if (volSlider2) volSlider2.value = masterVolume;
+      window.setMasterVolume(masterVolume);
     }
 
     updateHeaderDisplay();
@@ -188,7 +188,7 @@ function ensureAudioCtx() {
 
 async function playSound(soundId) {
   try {
-    const stopOnReclick = document.getElementById('stopOnReclickBtn')?.checked || false;
+    const stopOnReclick = document.getElementById('stopOnReclickCheckbox')?.checked || false;
     const isPlaying = activeSources.has(soundId);
     
     await invoke('play_sound', { id: soundId, stopOnReclick });
@@ -249,7 +249,7 @@ function stopSoundAnalysis(soundId) {
   if (src) {
     try { src.stop(); } catch (_) {}
     activeSources.delete(soundId);
-    const btn = document.querySelector(`.sound-button[data-id="${soundId}"]`);
+    const btn = document.querySelector(`.sound-button[data-sound-id="${soundId}"]`);
     if (btn) btn.classList.remove('playing');
   }
 }
@@ -502,7 +502,14 @@ async function setMasterVolume(value) {
   try {
     const volume = parseFloat(value) / 100;
     await invoke('set_volume', { volume });
-    document.getElementById('volumeValue').textContent = value + '%';
+    const volVal = document.getElementById('volumeValue');
+    if (volVal) volVal.textContent = value + '%';
+    
+    const slider1 = document.getElementById('masterVolume');
+    const slider2 = document.getElementById('masterVol');
+    if (slider1 && slider1.value !== value) slider1.value = value;
+    if (slider2 && slider2.value !== value) slider2.value = value;
+
     localStorage.setItem('masterVolume', value);
   } catch (error) {
     console.error('Volume error:', error);
