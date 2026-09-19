@@ -1095,22 +1095,6 @@ window.toggleAutoStart = async function(checked) {
   try {
     await render();
 
-    // Populate mic list
-    const mics = await invoke('get_input_devices');
-    const sel  = document.getElementById('micSelect');
-    [...new Set(mics)].forEach(mic => {
-      const opt = document.createElement('option');
-      opt.value = mic; opt.textContent = mic;
-      sel.appendChild(opt);
-    });
-
-    // Restore saved mic
-    const savedMic = localStorage.getItem('selectedMic');
-    if (savedMic && [...sel.options].some(o => o.value === savedMic)) {
-      sel.value = savedMic;
-      await window.setMic(savedMic);
-    }
-    
     // Populate virtual output list
     const outs = await invoke('get_output_devices');
     const outSel = document.getElementById('outSelect');
@@ -1120,11 +1104,27 @@ window.toggleAutoStart = async function(checked) {
       outSel.appendChild(opt);
     });
     
-    // Restore saved virtual output
+    // Restore saved virtual output FIRST so that handle2 exists in Rust
     const savedOut = localStorage.getItem('virtualOutput');
     if (savedOut && [...outSel.options].some(o => o.value === savedOut)) {
       outSel.value = savedOut;
       await window.setVirtualOutput(savedOut);
+    }
+
+    // Populate mic list
+    const mics = await invoke('get_input_devices');
+    const sel  = document.getElementById('micSelect');
+    [...new Set(mics)].forEach(mic => {
+      const opt = document.createElement('option');
+      opt.value = mic; opt.textContent = mic;
+      sel.appendChild(opt);
+    });
+
+    // Restore saved mic SECOND so it correctly pipes to the virtual output
+    const savedMic = localStorage.getItem('selectedMic');
+    if (savedMic && [...sel.options].some(o => o.value === savedMic)) {
+      sel.value = savedMic;
+      await window.setMic(savedMic);
     }
 
     // Restore test mic state
