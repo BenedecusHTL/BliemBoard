@@ -262,42 +262,8 @@ window.closeMicOverlay = function() {
 }
 
 async function connectMicToAnalyser(deviceLabel) {
-  try {
-    ensureAudioCtx();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
-    if (micSource) { micSource.disconnect(); micSource = null; }
-    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
-    if (!deviceLabel) return;
-
-    // First time they select a mic, show our custom styled overlay
-    if (!hasShownMicOverlay) {
-      document.getElementById('micOverlay').classList.add('show');
-      await new Promise(resolve => {
-        document.getElementById('micAllowBtn').onclick = () => {
-          hasShownMicOverlay = true;
-          localStorage.setItem('micPermissionGranted', 'true');
-          window.closeMicOverlay();
-          resolve();
-        };
-        document.getElementById('micOverlay').querySelector('.btn').onclick = () => {
-          window.closeMicOverlay();
-          // Rejecting custom prompt means we don't proceed
-          throw new Error('User cancelled mic permission');
-        };
-      });
-    }
-
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-    });
-    micSource = audioCtx.createMediaStreamSource(micStream);
-    micSource.connect(analyser);
-  } catch (e) {
-    if (e.message !== 'User cancelled mic permission') {
-      console.warn('Mic analyser connect error:', e);
-      showToast('Mic access denied — check OS permissions');
-    }
-  }
+  // Disabled by user request: Visualizer should only react to soundboard sounds, not the microphone.
+  return;
 }
 
 /* ─── VISUALIZER DRAW LOOP ─────────────────────────────────── */
