@@ -1,0 +1,1 @@
+const fs = require('fs'); let lines = fs.readFileSync('src/index.html', 'utf8').split('\n'); let counts = 0; lines.forEach(l => { if(l.includes('settingsOverlay')) counts++; }); console.log('Counts:', counts);

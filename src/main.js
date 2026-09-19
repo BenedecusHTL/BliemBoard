@@ -1488,11 +1488,11 @@ async function checkForUpdates() {
         updateBadge.textContent = 'Install new version ' + latestVersion;
         updateBadge.style.display = 'inline-block';
         
-        const msiAsset = data.assets && data.assets.find(a => a.name.endsWith('.msi'));
-        const downloadUrl = msiAsset ? msiAsset.browser_download_url : data.html_url;
+        const nsisAsset = data.assets && data.assets.find(a => a.name.endsWith('-setup.exe'));
+        const downloadUrl = nsisAsset ? nsisAsset.browser_download_url : data.html_url;
 
         updateBadge.onclick = async () => {
-          if (msiAsset) {
+          if (nsisAsset) {
             updateBadge.textContent = 'Downloading...';
             updateBadge.style.pointerEvents = 'none';
             try {

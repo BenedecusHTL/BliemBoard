@@ -187,9 +187,9 @@ fn open_url(url: String) {
 #[tauri::command]
 async fn download_and_install_update(url: String, app: tauri::AppHandle) -> Result<(), String> {
     let temp_dir = std::env::temp_dir();
-    let installer_path = temp_dir.join("BliemBoard_Update.msi");
+    let installer_path = temp_dir.join("BliemBoard_Update.exe");
     
-    // Download using curl (built into Windows)
+    // Download using curl (built into Windows 10+)
     let status = std::process::Command::new("curl")
         .args(["-L", "-o", installer_path.to_str().unwrap(), &url])
         .status()
@@ -201,9 +201,9 @@ async fn download_and_install_update(url: String, app: tauri::AppHandle) -> Resu
     
     let exe_path = std::env::current_exe().map_err(|e| e.to_string())?;
     
-    // Hidden powershell script: waits 2 seconds, kills app, installs passively, then restarts app
+    // Hidden powershell: waits 2 seconds, kills app, runs NSIS installer silently (/S), then restarts app
     let script = format!(
-        "Start-Sleep -Seconds 2; Stop-Process -Name 'soundboard-tauri' -Force -ErrorAction SilentlyContinue; Start-Process 'msiexec.exe' -ArgumentList '/i', '\"{}\"', '/passive' -Wait; Start-Process '\"{}\"'",
+        "Start-Sleep -Seconds 2; Stop-Process -Name 'soundboard-tauri' -Force -ErrorAction SilentlyContinue; Start-Process '\"{}\"' -ArgumentList '/S' -Wait; Start-Process '\"{}\"'",
         installer_path.display(),
         exe_path.display()
     );

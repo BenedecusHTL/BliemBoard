@@ -1,0 +1,48 @@
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Initialize failed: Error { code: HRESULT(0x88890003), message: "" }
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Format: 48000 Hz, 2 ch, 32 bits
+Capture started successfully!
