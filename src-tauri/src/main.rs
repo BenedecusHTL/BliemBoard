@@ -303,13 +303,14 @@ async fn export_board(path: String, state: State<'_, AppState>) -> Result<(), St
         zip.write_all(&data).map_err(|e| e.to_string())?;
     }
     
-    // Add all .audio files
+    // Add all sound files
     if let Ok(entries) = std::fs::read_dir(&app_dir) {
         for entry in entries.flatten() {
             let p = entry.path();
-            if p.is_file() && p.extension().map_or(false, |e| e == "audio") {
-                let name = p.file_name().unwrap().to_string_lossy();
-                zip.start_file(name.clone(), options.clone()).map_err(|e| e.to_string())?;
+            if p.is_file() {
+                let name = p.file_name().unwrap().to_str().unwrap();
+                if name == "sounds.json" { continue; } // Already added above
+                zip.start_file(name, options.clone()).map_err(|e| e.to_string())?;
                 let data = std::fs::read(&p).map_err(|e| e.to_string())?;
                 zip.write_all(&data).map_err(|e| e.to_string())?;
             }
