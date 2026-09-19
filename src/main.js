@@ -412,10 +412,17 @@ async function addPathAsSound(filePath) {
   try {
     const bytes = await invoke('read_file_bytes', { path: filePath });
     if (!bytes) throw new Error('Could not read file');
+    
+    ensureAudioCtx();
+    const arrayBuffer = new Uint8Array(bytes).buffer;
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+    const wavBytes = audioBufferToWav(decoded);
+    
     const id   = Date.now().toString() + Math.random().toString(36).slice(2);
     const name = filePath.split(/[\\/]/).pop().replace(/\.[^/.]+$/, '');
-    const ext  = filePath.split('.').pop().toLowerCase();
-    const audioData = Array.from(bytes);
+    const ext  = 'wav';
+    const audioData = Array.from(new Uint8Array(wavBytes));
+    
     await invoke('add_sound', { id, name, audioData, imageData: null, ext });
     await render();
     showToast(`"${name}" added!`);
@@ -433,10 +440,15 @@ async function addFileAsSound(file) {
   }
   try {
     const arrayBuffer = await file.arrayBuffer();
+    ensureAudioCtx();
+    const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+    const wavBytes = audioBufferToWav(decoded);
+    
     const id   = Date.now().toString() + Math.random().toString(36).slice(2);
     const name = file.name.replace(/\.[^/.]+$/, '');
-    const ext  = file.name.split('.').pop().toLowerCase();
-    const audioData = Array.from(new Uint8Array(arrayBuffer));
+    const ext  = 'wav';
+    const audioData = Array.from(new Uint8Array(wavBytes));
+    
     await invoke('add_sound', { id, name, audioData, imageData: null, ext });
     await render();
     showToast(`"${name}" added!`);
