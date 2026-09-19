@@ -416,7 +416,7 @@ async function addPathAsSound(filePath) {
     ensureAudioCtx();
     const arrayBuffer = new Uint8Array(bytes).buffer;
     const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-    const wavBytes = audioBufferToWav(decoded);
+    const wavBytes = window.audioBufferToWav(decoded);
     
     const id   = Date.now().toString() + Math.random().toString(36).slice(2);
     const name = filePath.split(/[\\/]/).pop().replace(/\.[^/.]+$/, '');
@@ -442,7 +442,7 @@ async function addFileAsSound(file) {
     const arrayBuffer = await file.arrayBuffer();
     ensureAudioCtx();
     const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-    const wavBytes = audioBufferToWav(decoded);
+    const wavBytes = window.audioBufferToWav(decoded);
     
     const id   = Date.now().toString() + Math.random().toString(36).slice(2);
     const name = file.name.replace(/\.[^/.]+$/, '');
@@ -1368,7 +1368,7 @@ window.toggleAutoStart = async function(checked) {
 
     try {
       const sliced = sliceAudioBuffer(editorBuffer, startTime, endTime);
-      const wavBytes = audioBufferToWav(sliced);
+      const wavBytes = window.audioBufferToWav(sliced);
       const wavArray = Array.from(new Uint8Array(wavBytes));
       await invoke('trim_sound', { id: editorSoundId, wavData: wavArray });
       showToast('✂️ Trim saved!');
@@ -1400,7 +1400,7 @@ window.toggleAutoStart = async function(checked) {
   }
 
   // Encode an AudioBuffer as a WAV file (PCM 16-bit, little-endian)
-  function audioBufferToWav(buffer) {
+  window.audioBufferToWav = function(buffer) {
     const numChannels = buffer.numberOfChannels;
     const sampleRate  = buffer.sampleRate;
     const numSamples  = buffer.length;
