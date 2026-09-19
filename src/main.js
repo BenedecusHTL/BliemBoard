@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { register, unregisterAll, isRegistered } from '@tauri-apps/plugin-global-shortcut';
 import { save, open } from '@tauri-apps/plugin-dialog';
@@ -167,6 +168,17 @@ window.addEventListener('DOMContentLoaded', () => {
    • Mic     → getUserMedia → same AnalyserNode
    Both paths feed one shared AnalyserNode. rodio still plays the real audio.
 ═══════════════════════════════════════════════════════════════ */
+
+listen('app_audio_peak', (event) => {
+  const { pid, peak } = event.payload;
+  const viz = document.getElementById(`app-viz-${pid}`);
+  if (viz) {
+    // Apply a sqrt curve to make lower volumes more visible, scale by ~400
+    const h = Math.min(100, Math.pow(peak, 0.5) * 400);
+    viz.style.height = `${h}%`;
+  }
+});
+
 let audioCtx  = null;
 let analyser  = null;
 let muteGain  = null;
@@ -1517,16 +1529,21 @@ function renderAudioApps() {
   // panel.style.display = 'block';
   _audioApps.forEach(app => {
     const card = document.createElement('div');
-    card.style.cssText = 'position:relative; display:flex; flex-direction:column; align-items:center; width:115px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:10px 8px 8px; gap:6px; cursor:default;';
+    card.style.cssText = 'position:relative; display:flex; flex-direction:column; align-items:center; width:115px; background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:10px 8px 8px; gap:6px; cursor:default; overflow:hidden;';
+
+    const viz = document.createElement('div');
+    viz.id = `app-viz-${app.pid}`;
+    viz.style.cssText = 'position:absolute; bottom:0; left:0; height:0%; width:100%; background:var(--primary); opacity:0.15; transition:height 0.05s ease-out; pointer-events:none; z-index:0;';
+    card.appendChild(viz);
 
     const rm = document.createElement('button');
     rm.innerHTML = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-    rm.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; color:var(--text-4); cursor:pointer; padding:2px; line-height:0;';
+    rm.style.cssText = 'position:absolute; top:4px; right:4px; background:none; border:none; color:var(--text-4); cursor:pointer; padding:2px; line-height:0; z-index:1;';
     rm.onclick = () => window.removeAudioApp(app.pid);
     card.appendChild(rm);
 
     const img = document.createElement('div');
-    img.style.cssText = 'width:40px; height:40px; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--bg-3);';
+    img.style.cssText = 'width:40px; height:40px; border-radius:6px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--bg-3); z-index:1; position:relative;';
     if (app.iconBase64) {
       img.innerHTML = `<img src="data:image/png;base64,${app.iconBase64}" style="width:32px;height:32px;object-fit:contain;">`;
     } else {
@@ -1536,7 +1553,7 @@ function renderAudioApps() {
 
     const name = document.createElement('div');
     name.textContent = app.name;
-    name.style.cssText = 'font-size:11px; color:var(--text-1); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; max-width:99px;';
+    name.style.cssText = 'font-size:11px; color:var(--text-1); text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; max-width:99px; z-index:1; position:relative;';
     card.appendChild(name);
 
     const row = document.createElement('div');
@@ -1545,7 +1562,7 @@ function renderAudioApps() {
     const slider = document.createElement('input');
     slider.type = 'range'; slider.min = '0'; slider.max = '100';
     slider.value = Math.round(app.volume * 100);
-    slider.style.cssText = 'width: 100%; max-width: 90px; text-align:center;';
+    slider.style.cssText = 'width: 100%; max-width: 90px; text-align:center; z-index:1; position:relative;';
     slider.oninput = () => {
       const vol = parseInt(slider.value) / 100;
       app.volume = vol;

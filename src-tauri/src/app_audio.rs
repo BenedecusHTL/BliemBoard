@@ -172,7 +172,7 @@ fn log_debug(msg: &str) {
 }
 
 #[cfg(target_os = "windows")]
-pub fn start_app_loopback(pid: u32, volume: f32, virtual_output_name: Option<String>) {
+pub fn start_app_loopback(pid: u32, volume: f32, virtual_output_name: Option<String>, app: tauri::AppHandle) {
     stop_app_loopback(pid);
     let (stop_tx, stop_rx) = std::sync::mpsc::channel::<()>();
     let vol_arc = Arc::new(Mutex::new(volume));
@@ -181,7 +181,7 @@ pub fn start_app_loopback(pid: u32, volume: f32, virtual_output_name: Option<Str
     { let mut state = LOOPBACK_STATE.lock().unwrap(); state.insert(pid, LoopbackEntry { stop_tx, volume: vol_arc }); }
     std::thread::spawn(move || {
         log_debug("Inside thread...");
-        unsafe { run_loopback_thread(pid, vol_clone, virtual_output_name, stop_rx); }
+        unsafe { run_loopback_thread(pid, vol_clone, virtual_output_name, stop_rx, app); }
         log_debug("Thread exited!");
     });
 }
@@ -270,11 +270,15 @@ use rodio::{OutputStream, Sink};
 use windows::Win32::{Foundation::*, Media::Audio::*, System::{Com::*, Threading::*}};
 
 #[cfg(target_os = "windows")]
+use tauri::Emitter;
+
+#[cfg(target_os = "windows")]
 unsafe fn run_loopback_thread(
     pid: u32,
     volume: Arc<Mutex<f32>>,
     virtual_output_name: Option<String>,
     stop_rx: std::sync::mpsc::Receiver<()>,
+    app: tauri::AppHandle,
 ) {
     let _ = CoInitializeEx(None, COINIT_MULTITHREADED);
 
@@ -336,6 +340,8 @@ unsafe fn run_loopback_thread(
     
     let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::AddAppLoopback(pid, cons, sample_rate, channels));
 
+    let mut last_emit = std::time::Instant::now();
+
     loop {
         if stop_rx.try_recv().is_ok() { break; }
         let w = WaitForSingleObject(ready_event, 50);
@@ -356,7 +362,17 @@ unsafe fn run_loopback_thread(
             } else { vec![0f32; total] };
             let _ = capture_client.ReleaseBuffer(num_frames);
             
-            for s in samples { let _ = prod.try_push(s); }
+            let mut local_peak: f32 = 0.0;
+            for s in samples { 
+                let abs = s.abs();
+                if abs > local_peak { local_peak = abs; }
+                let _ = prod.try_push(s); 
+            }
+            
+            if last_emit.elapsed().as_millis() > 50 {
+                let _ = app.emit("app_audio_peak", serde_json::json!({ "pid": pid, "peak": local_peak }));
+                last_emit = std::time::Instant::now();
+            }
         }
     }
 
