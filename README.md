@@ -1,45 +1,63 @@
-# 🎛️ BliemBoard
+﻿# 🎛️ BliemBoard
 
-BliemBoard ist ein blitzschnelles, modernes Soundboard, das mit **Rust & Tauri** entwickelt wurde. Es bietet minimale Latenz, globale Hotkeys und ein smartes Audio-Routing – perfekt für Discord, Teamspeak oder In-Game-Voice!
+BliemBoard is a lightning-fast, modern soundboard and audio router built with **Rust & Tauri**. It offers zero-latency playback, global hotkeys, and smart audio routing—perfect for Discord, TeamSpeak, or in-game voice chat!
 
 ## ✨ Features
 
-- **Drag & Drop:** Unterstützt `.mp3`, `.wav`, `.ogg` und extrahiert Audio direkt aus `.mp4` Videos.
-- **Integrierter Audio-Editor ✂️:** Schneide und trimme deine Sounds direkt in der App auf einer visuellen Waveform.
-- **Organisation:** Erstelle eigene Kategorien (Tabs), nutze die Echtzeit-Suche und sortiere deine Sounds per Drag & Drop frei auf dem Grid.
-- **Globale Hotkeys:** Spiele Sounds per Tastendruck ab, auch wenn BliemBoard im Hintergrund oder minimiert ist.
-- **Voll Anpassbar:** Eigene Bilder für Sounds, individuelle Lautstärkeregelung und anpassbares App-Logo & Titel.
-- **Mute Local & Mic-Passthrough:** Stummschaltung für deine eigenen Kopfhörer ("MUTED"-Modus), während der Sound für deine Freunde im Voice-Chat weiterläuft. Verhindert doppeltes Audio beim Discord Screen-Sharing!
-- **Auto-Updater:** BliemBoard checkt via GitHub automatisch auf neue Updates.
+- **Blazing Fast Rust Backend:** Rewritten with `rodio` and `cpal` for ultra-low latency, multi-channel audio processing directly at the system level.
+- **App Audio Loopback (NEW):** Seamlessly capture the audio from any running game or application (like Spotify, YouTube, or your favorite game) and pipe it directly into your virtual cable for your friends to hear.
+- **Real-Time Audio Visualizers (NEW):** Dynamic audio visualizers embedded behind your sound cards and running apps, reacting instantly to volume peaks.
+- **Drag & Drop:** Easily add your sounds (`.mp3` and `.wav` supported).
+- **Integrated Audio Editor ✂️:** Visually trim and cut your sounds on a waveform directly inside the app.
+- **Organization:** Create custom categories (tabs), use real-time search, and arrange your sounds freely on the grid via drag & drop.
+- **Global Hotkeys:** Trigger sounds or toggle mute with keyboard shortcuts, even when BliemBoard is minimized or playing in the background.
+- **Full Customization:** Add custom images to your sounds, customize the app theme color, set volume levels per sound, and change the app header.
+- **Smart Audio Routing & Mute Local:** Route your microphone and sounds into a virtual cable, while muting the sounds on your own headphones to avoid double-audio during screen sharing.
+- **Auto-Updater:** Automatically checks for and installs new updates via GitHub.
 
 ---
 
-## 🚀 Einrichtung & Audio-Routing (Tutorial)
+## 🚀 Setup & Audio Routing (Tutorial)
 
-Damit deine Freunde im Voice-Chat deine Sounds in perfekter Qualität hören können – und du weiterhin ganz normal sprechen kannst – nutzt BliemBoard ein virtuelles Audiokabel. Das BliemBoard fängt dein echtes Mikrofon ab, mischt die Sounds dazu und leitet beides gebündelt weiter.
+To allow your friends in voice chat to hear your soundboard (and captured games) in perfect quality while you can still speak normally, BliemBoard uses a Virtual Audio Cable. It captures your real microphone, mixes in the sounds and game audio, and outputs everything together.
 
-### Schritt 1: Virtual Audio Cable installieren
-1. Lade dir das kostenlose **[VB-Cable](https://vb-audio.com/Cable/)** herunter.
-2. Entpacke die ZIP-Datei und führe das Setup als Administrator aus.
-3. Starte danach am besten deinen PC einmal neu.
+### Step 1: Install a Virtual Audio Cable
+1. Download the free **[VB-Cable](https://vb-audio.com/Cable/)**.
+2. Extract the ZIP file and run the setup as Administrator.
+3. Restart your PC if prompted.
 
-### Schritt 2: BliemBoard Einstellungen
-Öffne BliemBoard und klicke oben rechts auf das ⚙️ **Zahnrad (Settings)**:
-- **Input Device (Dein Mikrofon):** Wähle hier dein *echtes* Mikrofon aus (z.B. dein Headset-Mikrofon).
-- **Output Device (Virtual Cable):** Wähle hier **`CABLE Input (VB-Audio Virtual Cable)`** aus.
+### Step 2: BliemBoard Settings
+Open BliemBoard and click the ⚙️ **Settings** gear icon in the top right:
+- **Pass-through Microphone (Input):** Select your *real* microphone here (e.g., your headset mic).
+- **Virtual Cable (Output to Discord):** Select **`CABLE Input (VB-Audio Virtual Cable)`** here.
 
-> 💡 *Was passiert hier? BliemBoard nimmt jetzt dein Mikrofon und die Sounds und leitet sie in dieses unsichtbare Kabel.*
+> 💡 *What happens here? BliemBoard now takes your microphone, your sound clips, and any "Additional Audio" games you add, and pipes them into this invisible cable.*
 
-### Schritt 3: Discord / Voice-Chat Einstellungen
-Gehe in Discord (oder in dein jeweiliges Spiel) in die Audio-Einstellungen:
-- **Eingabegerät (Microphone):** Wähle hier **`CABLE Output (VB-Audio Virtual Cable)`** aus.
+### Step 3: Discord / Voice-Chat Settings
+Go to your audio settings in Discord (or your game):
+- **Input Device (Microphone):** Select **`CABLE Output (VB-Audio Virtual Cable)`**.
 
-> ⚠️ **Wichtig für Discord-Nutzer:** Discord filtert Musik und Sounds oft als "Hintergrundgeräusche" heraus. Gehe in die Discord-Einstellungen unter "Sprach- & Videochat" und deaktiviere die **Echounterdrückung** sowie die **Geräuschunterdrückung (Krisp)**, damit deine Sounds nicht abgehackt werden.
+> ⚠️ **Important for Discord Users:** Discord often filters out music and soundboard noises as "background noise". Go to Discord's "Voice & Video" settings and disable **Echo Cancellation** and **Noise Suppression (Krisp)** so your sounds aren't cut off.
 
 ---
 
-## 🎮 Bedienung & Tipps
+## 🎮 Usage & Tips
 
-- **Sortieren:** Bleibe im "All" Tab und ziehe die Sounds mit der Maus an die gewünschte Position. BliemBoard speichert das Layout automatisch.
-- **Kategorien erstellen:** Klicke bei einem Sound auf ✏️ (Bearbeiten) und tippe eine neue Kategorie (z.B. "Memes") in das Feld. Der Tab wird von selbst erstellt!
-- **Schneiden:** Klicke auf ✂️ (Schere). Markiere in der Tonspur exakt den Bereich, den du behalten willst, teste ihn mit Play und speichere ab.
+- **Sorting:** Stay in the "All" tab and drag sounds with your mouse to your desired position. BliemBoard saves the layout automatically.
+- **Additional Audio:** Click "Add Additional Audio", select a running game/app, and BliemBoard will capture its audio and send it to your friends. The background visualizer will bounce to show it's working!
+- **Categories:** Click ✏️ (Edit) on a sound and type a new category (e.g., "Memes"). The tab will be created automatically.
+- **Editing:** Click ✂️ (Scissors) on a sound. Highlight the exact section of the waveform you want to keep, test it with Play, and save.
+
+---
+
+## 🛠️ Developer Setup
+```bash
+# Install dependencies
+npm install
+
+# Run in development mode
+npm run tauri dev
+
+# Build for production
+npm run tauri build
+```
