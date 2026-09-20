@@ -3,6 +3,7 @@ import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { register, unregisterAll, isRegistered } from '@tauri-apps/plugin-global-shortcut';
 import { save, open } from '@tauri-apps/plugin-dialog';
+import { EqVisualizer, CompVisualizer } from './dsp_ui.js';
 
 /* ─── CUSTOMIZATIONS ─────────────────────────────────────────── */
 window.setThemeColor = function(hex) {
@@ -1289,13 +1290,165 @@ window.toggleAutoStart = async function(checked) {
     document.addEventListener('touchend', onMouseUp);
   }
 
-  // Open the editor for a given sound id
+  // --- DSP EFFECTS ---
+  let dspPreviewWav = null;
+
+  function initMicDsp() {
+    window.eqVisualizer = new EqVisualizer('eqCanvas', () => window.triggerMicDspUpdate());
+    window.compVisualizer = new CompVisualizer('compCanvas', () => window.triggerMicDspUpdate());
+    const saved = localStorage.getItem('micDspChain');
+    if (saved) {
+      try {
+        const chain = JSON.parse(saved);
+        setDspChain(chain);
+        // panels removed
+      } catch (e) {
+        console.error("Failed to parse saved DSP chain", e);
+      }
+    }
+  }
+
+  window.triggerMicDspUpdate = async function() {
+    const chain = getDspChain();
+    localStorage.setItem('micDspChain', JSON.stringify(chain));
+    try {
+      await invoke('set_mic_effects', { chain });
+    } catch (e) {
+      console.error("Failed to update mic DSP", e);
+    }
+  };
+
+  window.openDspModal = function(section) {
+    document.getElementById(`dsp${section}Modal`).style.display = 'block';
+    if (section === 'Eq' && window.eqVisualizer) window.eqVisualizer.resize();
+    if (section === 'Comp' && window.compVisualizer) window.compVisualizer.resize();
+  };
+
+  window.closeDspModal = function(section) {
+    document.getElementById(`dsp${section}Modal`).style.display = 'none';
+  };
+
+  window.applyDspPreset = function(preset) {
+    const pDenoise = document.getElementById('dspDenoiseEnable');
+    const pEq = document.getElementById('dspEqEnable');
+    const pComp = document.getElementById('dspCompEnable');
+    
+    // reset
+    pDenoise.checked = false; pEq.checked = false; pComp.checked = false;
+    document.getElementById('dspDenoiseStrength').value = 1.0;
+    
+    let eq = [
+        { freq: 80.0, gain_db: 0.0, q: 0.707 },
+        { freq: 250.0, gain_db: 0.0, q: 0.707 },
+        { freq: 1000.0, gain_db: 0.0, q: 0.707 },
+        { freq: 4000.0, gain_db: 0.0, q: 0.707 },
+        { freq: 8000.0, gain_db: 0.0, q: 0.707 }
+    ];
+    let compThresh = -12;
+    document.getElementById('dspCompRatio').value = 4.0;
+    
+    if (preset === 'voice_cleanup') {
+      pDenoise.checked = true;
+      pEq.checked = true; pComp.checked = true;
+      eq[0].gain_db = -12;
+      eq[3].gain_db = 3;
+      compThresh = -18;
+    } else if (preset === 'podcast') {
+      pEq.checked = true; pComp.checked = true;
+      eq[0].gain_db = 4;
+      eq[4].gain_db = 4;
+      compThresh = -24;
+      document.getElementById('dspCompRatio').value = 6.0;
+    } else if (preset === 'loud_meme') {
+      pEq.checked = true; pComp.checked = true;
+      eq[1].gain_db = 10;
+      eq[2].gain_db = 10;
+      compThresh = -40;
+      document.getElementById('dspCompRatio').value = 20.0;
+    } else if (preset === 'warm') {
+      pEq.checked = true;
+      eq[0].gain_db = 6;
+      eq[1].gain_db = 3;
+      eq[3].gain_db = -2;
+      eq[4].gain_db = -4;
+    }
+    
+    window.eqVisualizer.setBands(eq);
+    window.compVisualizer.setThreshold(compThresh);
+    
+    // panels removed
+    
+    document.getElementById('dspDenoiseVal').textContent = document.getElementById('dspDenoiseStrength').value;
+    document.getElementById('dspCompRatioVal').textContent = document.getElementById('dspCompRatio').value;
+    
+    window.triggerMicDspUpdate();
+  };
+
+  function getDspChain() {
+    return {
+      denoise: {
+        enabled: document.getElementById('dspDenoiseEnable').checked,
+        strength: parseFloat(document.getElementById('dspDenoiseStrength').value)
+      },
+      eq: {
+        enabled: document.getElementById('dspEqEnable').checked,
+        bands: window.eqVisualizer ? window.eqVisualizer.getBands() : []
+      },
+      compressor: {
+        enabled: document.getElementById('dspCompEnable').checked,
+        threshold_db: window.compVisualizer ? window.compVisualizer.getThreshold() : -12,
+        ratio: parseFloat(document.getElementById('dspCompRatio').value),
+        attack_ms: 5.0,
+        release_ms: 50.0,
+        knee_db: 6.0,
+        auto_makeup: true,
+        makeup_db: 0.0,
+        detector: 'RMS'
+      }
+    };
+  }
+
+  function setDspChain(chain) {
+    if (!chain) {
+      document.getElementById('dspDenoiseEnable').checked = false;
+      document.getElementById('dspEqEnable').checked = false;
+      document.getElementById('dspCompEnable').checked = false;
+    } else {
+      if (chain.denoise) {
+        document.getElementById('dspDenoiseEnable').checked = chain.denoise.enabled;
+        document.getElementById('dspDenoiseStrength').value = chain.denoise.strength;
+      }
+      if (chain.eq) {
+        document.getElementById('dspEqEnable').checked = chain.eq.enabled;
+        if (window.eqVisualizer) window.eqVisualizer.setBands(chain.eq.bands);
+      }
+      if (chain.compressor) {
+        document.getElementById('dspCompEnable').checked = chain.compressor.enabled;
+        if (window.compVisualizer) window.compVisualizer.setThreshold(chain.compressor.threshold_db);
+        document.getElementById('dspCompRatio').value = chain.compressor.ratio;
+      }
+    }
+    for(let i=0; i<5; i++) {
+      let v = document.getElementById(`dspEqBand${i}`).value;
+      document.getElementById(`dspEqVal${i}`).textContent = (v > 0 ? '+'+v : v) + 'dB';
+    }
+    document.getElementById('dspDenoiseVal').textContent = document.getElementById('dspDenoiseStrength').value;
+    document.getElementById('dspCompThreshVal').textContent = document.getElementById('dspCompThresh').value;
+    document.getElementById('dspCompRatioVal').textContent = document.getElementById('dspCompRatio').value;
+  }
+
+    // Open the editor for a given sound id
   window.openAudioEditor = async function(soundId, soundName) {
     editorSoundId = soundId;
     editorStartFrac = 0;
     editorEndFrac   = 1;
     editorBuffer    = null;
     if (editorPreviewSource) { try { editorPreviewSource.stop(); } catch(_) {} editorPreviewSource = null; }
+
+    const allSounds = await invoke('get_sounds');
+    const sound = allSounds.find(s => s.id === soundId);
+    if (sound) setDspChain(sound.effects);
+    else setDspChain(null);
 
     document.getElementById('audioEditorName').textContent = soundName || '';
     overlay().classList.add('show');

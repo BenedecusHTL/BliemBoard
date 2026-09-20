@@ -1,6 +1,6 @@
 [package]
 name = "soundboard-tauri"
-version = "1.1.0"
+version = "1.1.1"
 description = "A terminal MCP style Soundboard"
 authors = ["You"]
 edition = "2021"
@@ -26,6 +26,8 @@ rdev = "0.5.3"
 lazy_static = "1.5.0"
 figlet-rs = "1.0.0"
 image = { version = "0.25", default-features = false, features = ["png"] }
+nnnoiseless = "0.5.2"
+biquad = "0.6"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"

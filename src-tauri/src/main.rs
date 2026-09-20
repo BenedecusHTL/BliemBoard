@@ -5,6 +5,7 @@ mod audio;
 mod store;
 mod hotkey;
 mod app_audio;
+pub mod dsp;
 
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -48,6 +49,7 @@ fn add_sound(
         volume: 1.0,
         hotkey: None,
         category: None,
+        effects: None,
     });
     store.save_sounds(&sounds);
     Ok(())
@@ -61,6 +63,7 @@ fn update_sound(
     volume: Option<f32>,
     hotkey: Option<String>,
     category: Option<String>,
+    effects: Option<crate::dsp::EffectChain>,
     state: State<'_, AppState>,
 ) -> Result<(), String> {
     let store = state.store.lock().unwrap();
@@ -70,18 +73,17 @@ fn update_sound(
         if let Some(n) = name {
             sound.name = n;
         }
-        if image_data.is_some() {
-            sound.image_data = image_data;
+        if let Some(i) = image_data {
+            sound.image_data = if i.is_empty() { None } else { Some(i) };
         }
         if let Some(v) = volume {
             sound.volume = v;
         }
         if let Some(h) = hotkey {
-            if h.is_empty() {
-                sound.hotkey = None;
-            } else {
-                sound.hotkey = Some(h);
-            }
+            sound.hotkey = if h.is_empty() { None } else { Some(h) };
+        }
+        if let Some(e) = effects {
+            sound.effects = Some(e);
         }
         if let Some(c) = category {
             if c.trim().is_empty() {
@@ -399,6 +401,70 @@ fn stop_app_loopback(pid: u32) {
 }
 
 
+#[tauri::command]
+async fn apply_effects(
+    app: tauri::AppHandle,
+    path: String,
+    chain: crate::dsp::EffectChain,
+) -> Result<crate::dsp::EffectResult, String> {
+    use tauri::Emitter;
+    let app_handle = app.clone();
+    
+    tauri::async_runtime::spawn_blocking(move || {
+        use rodio::Source;
+        let file = std::fs::File::open(&path).map_err(|e| e.to_string())?;
+        let decoder = rodio::Decoder::new(std::io::BufReader::new(file)).map_err(|e| e.to_string())?;
+        
+        let sample_rate = decoder.sample_rate();
+        let channels = decoder.channels() as usize;
+        
+        let mut interleaved: Vec<f32> = Vec::new();
+        for sample in decoder.convert_samples::<f32>() {
+            interleaved.push(sample);
+        }
+        
+        let mut deinterleaved = vec![vec![]; channels];
+        for (i, &s) in interleaved.iter().enumerate() {
+            deinterleaved[i % channels].push(s);
+        }
+        
+        let _ = app_handle.emit("dsp_progress", 0.3);
+        
+        let stats = crate::dsp::process_chain(&mut deinterleaved, sample_rate, &chain)?;
+        
+        let _ = app_handle.emit("dsp_progress", 0.9);
+        
+        use tauri::Manager;
+        let temp_path = app_handle.path().app_data_dir()
+            .map_err(|_| "Failed to get app_data_dir".to_string())?
+            .join("preview.wav");
+        crate::dsp::write_wav_f32(&temp_path, &deinterleaved, sample_rate)?;
+        
+        let _ = app_handle.emit("dsp_progress", 1.0);
+        
+        Ok(crate::dsp::EffectResult {
+            preview_path: temp_path.to_string_lossy().to_string(),
+            max_gr_db: stats.max_gain_reduction_db,
+        })
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+fn commit_effects(original_path: String, preview_path: String) -> Result<(), String> {
+    std::fs::rename(preview_path, original_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn read_raw_bytes(path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_mic_effects(chain: Option<crate::dsp::EffectChain>) -> Result<(), String> {
+    let _ = crate::audio::AUDIO_SENDER.send(crate::audio::AudioCommand::SetMicEffects(chain));
+    Ok(())
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -481,6 +547,10 @@ fn main() {
             _ => {}
         })
         .invoke_handler(tauri::generate_handler![
+            apply_effects,
+            commit_effects,
+            read_raw_bytes,
+            set_mic_effects,
             get_sounds,
             add_sound,
             update_sound,

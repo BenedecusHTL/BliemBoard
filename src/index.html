@@ -1055,7 +1055,7 @@
     </div>
     <div class="header-meta" style="display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box;">
       <div style="flex: 1; text-align: left;">
-        <span class="version">v1.1.0</span>
+        <span class="version">v1.1.1</span>
       </div>
       <div style="flex: 1; text-align: center;">
         <span id="mutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 0 4px; border-radius: 3px; font-size: 10px;">MUTED</span>
@@ -1135,13 +1135,78 @@
   <!-- -- SETTINGS OVERLAY -- -->
   <div id="settingsOverlay" class="edit-overlay">
     <div class="edit-modal" style="width: 450px;">
-      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.0.34</span></div>
+      <div class="modal-titlebar">APP SETTINGS <span style="font-size:10px; color:var(--text-5); margin-left:8px;">v1.1.1</span></div>
       <div class="modal-body">
         
         <div class="modal-header">Pass-through Microphone (Input):</div>
-        <select id="micSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setMic(this.value)">
+        <select id="micSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 5px;" onchange="setMic(this.value)">
           <option value="">No Microphone</option>
         </select>
+        
+        <!-- Mic DSP Effects Panel -->
+        <div style="background:var(--bg-3); border-radius:6px; padding:10px; border:1px solid var(--border); font-size:12px; margin-bottom:15px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="display:flex; gap:15px; align-items:center;">
+              <span style="font-weight:bold; color:var(--text-1);">&#10024; Microphone DSP</span>
+            </div>
+            <select id="dspPresets" onchange="window.applyDspPreset(this.value)" style="font-size:11px; padding:2px; background:var(--bg-4); color:var(--text-2); border:1px solid var(--border); border-radius:3px;">
+              <option value="off">Off</option>
+              <option value="voice_cleanup">Voice Cleanup</option>
+              <option value="podcast">Podcast</option>
+              <option value="loud_meme">Loud Meme</option>
+              <option value="warm">Warm</option>
+            </select>
+          </div>
+          
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Denoise -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-2); padding:8px 12px; border-radius:4px; border:1px solid var(--border);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text-2); font-weight:bold;">
+                <input type="checkbox" id="dspDenoiseEnable" onchange="window.triggerMicDspUpdate()"> Noise Removal
+              </label>
+              <button onclick="window.openDspModal('Denoise')" style="background:transparent; border:none; color:var(--text-2); cursor:pointer; font-size:16px;">&#9881;</button>
+            </div>
+
+            <!-- EQ -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-2); padding:8px 12px; border-radius:4px; border:1px solid var(--border);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text-2); font-weight:bold;">
+                <input type="checkbox" id="dspEqEnable" onchange="window.triggerMicDspUpdate()"> Parametric Equalizer
+              </label>
+              <button onclick="window.openDspModal('Eq')" style="background:transparent; border:none; color:var(--text-2); cursor:pointer; font-size:16px;">&#9881;</button>
+            </div>
+
+            <!-- Compressor -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-2); padding:8px 12px; border-radius:4px; border:1px solid var(--border);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text-2); font-weight:bold;">
+                <input type="checkbox" id="dspCompEnable" onchange="window.triggerMicDspUpdate()"> Compressor
+              </label>
+              <button onclick="window.openDspModal('Comp')" style="background:transparent; border:none; color:var(--text-2); cursor:pointer; font-size:16px;">&#9881;</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DSP Modals -->
+        <div id="dspDenoiseModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:300px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Noise Removal</span><button onclick="window.closeDspModal('Denoise')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <div style="display:flex; justify-content:space-between; color:var(--text-3); font-size:11px; margin-bottom:4px;"><span>Strength</span><span id="dspDenoiseVal">1.0</span></div>
+          <input type="range" id="dspDenoiseStrength" min="0" max="1" step="0.05" value="1.0" oninput="document.getElementById('dspDenoiseVal').textContent=this.value; window.triggerMicDspUpdate();" style="width:100%;">
+        </div>
+
+        <div id="dspEqModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:600px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Parametric Equalizer</span><button onclick="window.closeDspModal('Eq')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <canvas id="eqCanvas" style="width:100%; height:250px; border-radius:4px; background:var(--bg-1); border:1px solid var(--border); display:block;"></canvas>
+        </div>
+
+        <div id="dspCompModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:550px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Compressor</span><button onclick="window.closeDspModal('Comp')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <canvas id="compCanvas" style="width:100%; height:180px; border-radius:4px; background:var(--bg-1); border:1px solid var(--border); display:block;"></canvas>
+          <div style="display:flex; gap:10px; margin-top:15px;">
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; color:var(--text-3); font-size:11px;"><span>Ratio</span><span id="dspCompRatioVal">4.0</span></div>
+              <input type="range" id="dspCompRatio" min="1" max="20" step="0.5" value="4.0" oninput="document.getElementById('dspCompRatioVal').textContent=this.value; window.triggerMicDspUpdate();" style="width:100%;">
+            </div>
+          </div>
+        </div>
         
         <div class="modal-header">Virtual Cable (Output to Discord):</div>
         <select id="outSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setVirtualOutput(this.value)">
@@ -1334,6 +1399,8 @@
         <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">&mdash;</b></span>
         <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
       </div>
+
+
 
       <!-- Loading / error state -->
       <div id="editorStatus" style="font-size:12px; color:var(--text-2); text-align:center; min-height:16px;"></div>

@@ -46,3 +46,28 @@ WaitForSingleObject result: WAIT_EVENT(0)
 Got IAudioClient
 Format: 48000 Hz, 2 ch, 32 bits
 Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Using fixed format: 44100 Hz, 2 ch, 16 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Using fixed format: 44100 Hz, 2 ch, 16 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Using fixed format: 44100 Hz, 2 ch, 16 bits
+Capture started successfully!
+Starting loopback for PID 18028
+Calling ActivateAudioInterfaceAsync...
+WaitForSingleObject result: WAIT_EVENT(0)
+Got IAudioClient
+Using fixed format: 44100 Hz, 2 ch, 16 bits
+Capture started successfully!
+Stop signal received

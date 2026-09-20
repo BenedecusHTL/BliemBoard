@@ -18,6 +18,8 @@ pub struct SoundInfo {
     pub hotkey: Option<String>,
     #[serde(default)]
     pub category: Option<String>,
+    #[serde(default)]
+    pub effects: Option<crate::dsp::EffectChain>,
 }
 
 pub struct Store {

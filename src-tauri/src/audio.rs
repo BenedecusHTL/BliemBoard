@@ -64,6 +64,7 @@ pub enum AudioCommand {
     MicDisconnected,
     AddAppLoopback(u32, ringbuf::HeapCons<f32>, u32, u16),
     RemoveAppLoopback(u32),
+    SetMicEffects(Option<crate::dsp::EffectChain>),
 }
 
 pub static IS_MUTED: Lazy<Arc<AtomicBool>> = Lazy::new(|| Arc::new(AtomicBool::new(false)));
@@ -97,6 +98,8 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
         let mut mic_local_sink: Option<Sink> = None;
         let mut mic_cable_sink: Option<Sink> = None;
         let mut mic_stream: Option<cpal::Stream> = None;
+        let shared_mic_effects = Arc::new(std::sync::Mutex::new(None::<crate::dsp::EffectChain>));
+        let mic_effects_dirty = Arc::new(std::sync::atomic::AtomicBool::new(true));
 
         let mut app_loopback_sinks: HashMap<u32, Sink> = HashMap::new();
 
@@ -302,6 +305,12 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                         }
                     }
                 }
+                AudioCommand::SetMicEffects(chain) => {
+                    if let Ok(mut guard) = shared_mic_effects.lock() {
+                        *guard = chain;
+                    }
+                    mic_effects_dirty.store(true, Ordering::Relaxed);
+                }
                 AudioCommand::SetInputDevice(name) => {
                     mic_input_name = name;
 
@@ -360,16 +369,60 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                                 let is_muted_f32 = is_muted.clone();
                                 let is_muted_i16 = is_muted.clone();
 
+                                let shared_eff_f32 = shared_mic_effects.clone();
+                                let dirty_f32 = mic_effects_dirty.clone();
+                                let mut eq_f32: Option<crate::dsp::eq::EqState> = None;
+                                let mut comp_f32: Option<crate::dsp::compressor::CompressorState> = None;
+                                let mut denoise_f32: Option<Box<nnnoiseless::DenoiseState>> = None;
+                                let mut d_buf_f32 = [0.0f32; 480];
+                                let mut d_idx_f32 = 0;
+                                let sr = sample_rate;
+
+                                let shared_eff_i16 = shared_mic_effects.clone();
+                                let dirty_i16 = mic_effects_dirty.clone();
+                                let mut eq_i16: Option<crate::dsp::eq::EqState> = None;
+                                let mut comp_i16: Option<crate::dsp::compressor::CompressorState> = None;
+                                let mut denoise_i16: Option<Box<nnnoiseless::DenoiseState>> = None;
+                                let mut d_buf_i16 = [0.0f32; 480];
+                                let mut d_idx_i16 = 0;
+
                                 let stream = match config.sample_format() {
                                     cpal::SampleFormat::F32 => dev.build_input_stream(
                                         &config.into(),
                                         move |data: &[f32], _| {
+                                            if dirty_f32.swap(false, Ordering::Relaxed) {
+                                                if let Ok(guard) = shared_eff_f32.lock() {
+                                                    if let Some(chain) = guard.as_ref() {
+                                                        eq_f32 = if chain.eq.enabled { crate::dsp::eq::EqState::new(&chain.eq, sr).ok() } else { None };
+                                                        comp_f32 = if chain.compressor.enabled { Some(crate::dsp::compressor::CompressorState::new(&chain.compressor, sr, 1)) } else { None };
+                                                        denoise_f32 = if chain.denoise.enabled { Some(nnnoiseless::DenoiseState::new()) } else { None };
+                                                    } else {
+                                                        eq_f32 = None; comp_f32 = None; denoise_f32 = None;
+                                                    }
+                                                }
+                                            }
                                             let muted = is_muted_f32.load(Ordering::Relaxed);
                                             for &sample in data {
-                                                let s = if muted { 0.0 } else { sample };
-                                                let _ = prod1.try_push(s);
-                                                if let Some(p2) = &mut prod2_opt {
-                                                    let _ = p2.try_push(s);
+                                                let mut s = if muted { 0.0 } else { sample };
+                                                if let Some(eq) = &mut eq_f32 { s = eq.process_sample(s); }
+                                                if let Some(comp) = &mut comp_f32 { s = comp.process_sample(s); }
+                                                
+                                                if let Some(denoise) = &mut denoise_f32 {
+                                                    d_buf_f32[d_idx_f32] = s;
+                                                    d_idx_f32 += 1;
+                                                    if d_idx_f32 == 480 {
+                                                        let mut out = [0.0f32; 480];
+                                                        denoise.process_frame(&mut out, &d_buf_f32);
+                                                        d_buf_f32 = out;
+                                                        for &ds in d_buf_f32.iter() {
+                                                            let _ = prod1.try_push(ds);
+                                                            if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                        }
+                                                        d_idx_f32 = 0;
+                                                    }
+                                                } else {
+                                                    let _ = prod1.try_push(s);
+                                                    if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(s); }
                                                 }
                                             }
                                         },
@@ -379,13 +432,40 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                                     cpal::SampleFormat::I16 => dev.build_input_stream(
                                         &config.into(),
                                         move |data: &[i16], _| {
+                                            if dirty_i16.swap(false, Ordering::Relaxed) {
+                                                if let Ok(guard) = shared_eff_i16.lock() {
+                                                    if let Some(chain) = guard.as_ref() {
+                                                        eq_i16 = if chain.eq.enabled { crate::dsp::eq::EqState::new(&chain.eq, sr).ok() } else { None };
+                                                        comp_i16 = if chain.compressor.enabled { Some(crate::dsp::compressor::CompressorState::new(&chain.compressor, sr, 1)) } else { None };
+                                                        denoise_i16 = if chain.denoise.enabled { Some(nnnoiseless::DenoiseState::new()) } else { None };
+                                                    } else {
+                                                        eq_i16 = None; comp_i16 = None; denoise_i16 = None;
+                                                    }
+                                                }
+                                            }
                                             let muted = is_muted_i16.load(Ordering::Relaxed);
                                             for &sample in data {
-                                                let s = sample as f32 / std::i16::MAX as f32;
-                                                let final_s = if muted { 0.0 } else { s };
-                                                let _ = prod1.try_push(final_s);
-                                                if let Some(p2) = &mut prod2_opt {
-                                                    let _ = p2.try_push(final_s);
+                                                let mut s = sample as f32 / std::i16::MAX as f32;
+                                                let mut final_s = if muted { 0.0 } else { s };
+                                                if let Some(eq) = &mut eq_i16 { final_s = eq.process_sample(final_s); }
+                                                if let Some(comp) = &mut comp_i16 { final_s = comp.process_sample(final_s); }
+                                                
+                                                if let Some(denoise) = &mut denoise_i16 {
+                                                    d_buf_i16[d_idx_i16] = final_s;
+                                                    d_idx_i16 += 1;
+                                                    if d_idx_i16 == 480 {
+                                                        let mut out = [0.0f32; 480];
+                                                        denoise.process_frame(&mut out, &d_buf_i16);
+                                                        d_buf_i16 = out;
+                                                        for &ds in d_buf_i16.iter() {
+                                                            let _ = prod1.try_push(ds);
+                                                            if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                        }
+                                                        d_idx_i16 = 0;
+                                                    }
+                                                } else {
+                                                    let _ = prod1.try_push(final_s);
+                                                    if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(final_s); }
                                                 }
                                             }
                                         },
