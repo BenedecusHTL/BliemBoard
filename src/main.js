@@ -183,6 +183,9 @@ listen('app_audio_peak', (event) => {
     const h = Math.min(100, Math.pow(peak, 0.5) * 400);
     viz.style.height = `${h}%`;
   }
+  if (peak > 0.0001) {
+    window.lastAppAudioPeak = Math.max(window.lastAppAudioPeak || 0, peak);
+  }
 });
 
 let audioCtx  = null;
@@ -324,6 +327,7 @@ function drawViz() {
 
   const W = vizCanvas.width, H = vizCanvas.height;
   vizCtx.clearRect(0, 0, W, H);
+  if (window.lastAppAudioPeak) window.lastAppAudioPeak *= 0.9;
 
   if (!analyser) {
     // idle flat line in muted gold
@@ -348,7 +352,14 @@ function drawViz() {
     // Logarithmic bin mapping for realistic spectrum shape
     const t_i   = i / BAR_COUNT;
     const binIdx = Math.min(Math.floor(Math.pow(bufLen, t_i)), bufLen - 1);
-    const raw   = dataArr[binIdx] / 255;
+    let raw   = dataArr[binIdx] / 255;
+    
+    // Inject Additional Audio peak to fake a frequency response
+    if (window.lastAppAudioPeak > 0) {
+      // Create a fake spectrum shape: higher in mids/lows
+      const fakeMag = Math.pow(Math.max(0, 1 - Math.abs(t_i - 0.3) * 2), 2);
+      raw = Math.max(raw, (window.lastAppAudioPeak * 4) * fakeMag * (0.8 + Math.random() * 0.4));
+    }
 
     // Fast attack, slow decay
     smoothBars[i] = raw > smoothBars[i]
