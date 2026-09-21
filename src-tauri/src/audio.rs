@@ -402,10 +402,18 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                                                 }
                                             }
                                             let muted = is_muted_f32.load(Ordering::Relaxed);
-                                            for &sample in data {
-                                                let mut s = if muted { 0.0 } else { sample };
+                                            let mut i = 0;
+                                            while i < data.len() {
+                                                let mut s = data[i];
+                                                if channels == 2 && i + 1 < data.len() {
+                                                    s = (s + data[i + 1]) * 0.5;
+                                                    i += 2;
+                                                } else {
+                                                    i += 1;
+                                                }
                                                 if let Some(eq) = &mut eq_f32 { s = eq.process_sample(s); }
                                                 if let Some(comp) = &mut comp_f32 { s = comp.process_sample(s); }
+                                                if muted { s = 0.0; }
                                                 
                                                 if let Some(denoise) = &mut denoise_f32 {
                                                     d_buf_f32[d_idx_f32] = s;
@@ -413,16 +421,19 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                                                     if d_idx_f32 == 480 {
                                                         let mut out = [0.0f32; 480];
                                                         denoise.process_frame(&mut out, &d_buf_f32);
-                                                        d_buf_f32 = out;
-                                                        for &ds in d_buf_f32.iter() {
-                                                            let _ = prod1.try_push(ds);
-                                                            if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                        for &ds in out.iter() {
+                                                            for _ in 0..channels {
+                                                                let _ = prod1.try_push(ds);
+                                                                if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                            }
                                                         }
                                                         d_idx_f32 = 0;
                                                     }
                                                 } else {
-                                                    let _ = prod1.try_push(s);
-                                                    if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(s); }
+                                                    for _ in 0..channels {
+                                                        let _ = prod1.try_push(s);
+                                                        if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(s); }
+                                                    }
                                                 }
                                             }
                                         },
@@ -444,28 +455,40 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                                                 }
                                             }
                                             let muted = is_muted_i16.load(Ordering::Relaxed);
-                                            for &sample in data {
-                                                let mut s = sample as f32 / std::i16::MAX as f32;
-                                                let mut final_s = if muted { 0.0 } else { s };
-                                                if let Some(eq) = &mut eq_i16 { final_s = eq.process_sample(final_s); }
-                                                if let Some(comp) = &mut comp_i16 { final_s = comp.process_sample(final_s); }
+                                            let mut i = 0;
+                                            while i < data.len() {
+                                                let mut s = data[i] as f32 / std::i16::MAX as f32;
+                                                if channels == 2 && i + 1 < data.len() {
+                                                    let s2 = data[i + 1] as f32 / std::i16::MAX as f32;
+                                                    s = (s + s2) * 0.5;
+                                                    i += 2;
+                                                } else {
+                                                    i += 1;
+                                                }
+                                                
+                                                if let Some(eq) = &mut eq_i16 { s = eq.process_sample(s); }
+                                                if let Some(comp) = &mut comp_i16 { s = comp.process_sample(s); }
+                                                if muted { s = 0.0; }
                                                 
                                                 if let Some(denoise) = &mut denoise_i16 {
-                                                    d_buf_i16[d_idx_i16] = final_s;
+                                                    d_buf_i16[d_idx_i16] = s;
                                                     d_idx_i16 += 1;
                                                     if d_idx_i16 == 480 {
                                                         let mut out = [0.0f32; 480];
                                                         denoise.process_frame(&mut out, &d_buf_i16);
-                                                        d_buf_i16 = out;
-                                                        for &ds in d_buf_i16.iter() {
-                                                            let _ = prod1.try_push(ds);
-                                                            if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                        for &ds in out.iter() {
+                                                            for _ in 0..channels {
+                                                                let _ = prod1.try_push(ds);
+                                                                if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(ds); }
+                                                            }
                                                         }
                                                         d_idx_i16 = 0;
                                                     }
                                                 } else {
-                                                    let _ = prod1.try_push(final_s);
-                                                    if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(final_s); }
+                                                    for _ in 0..channels {
+                                                        let _ = prod1.try_push(s);
+                                                        if let Some(p2) = &mut prod2_opt { let _ = p2.try_push(s); }
+                                                    }
                                                 }
                                             }
                                         },

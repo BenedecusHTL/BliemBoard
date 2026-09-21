@@ -160,7 +160,7 @@ function restoreCustomizations() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    restoreCustomizations();
+    restoreCustomizations();\n    initMicDsp();
 });
 
 /* ═══════════════════════════════════════════════════════════════
