@@ -75,6 +75,7 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
         let mut virtual_output_name: Option<String> = None;
         let mut mic_input_name: Option<String> = None;
         let mut test_mic = false;
+        let mut reconnecting_mic = false;
 
         let is_muted = IS_MUTED.clone();
 
@@ -304,6 +305,7 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                 }
                 AudioCommand::SetInputDevice(name) => {
                     mic_input_name = name;
+                    reconnecting_mic = false;
 
                     mic_stream = None;
                     mic_local_sink = None;
@@ -503,6 +505,24 @@ pub static AUDIO_SENDER: Lazy<Sender<AudioCommand>> = Lazy::new(|| {
                             sink.append(s3);
                             sink.detach();
                         }
+                    }
+
+                    if !reconnecting_mic && mic_input_name.is_some() {
+                        reconnecting_mic = true;
+                        let target_name = mic_input_name.clone().unwrap();
+                        let tx = AUDIO_SENDER.clone();
+                        thread::spawn(move || {
+                            loop {
+                                thread::sleep(std::time::Duration::from_secs(3));
+                                let host = cpal::default_host();
+                                if let Ok(mut devs) = host.input_devices() {
+                                    if devs.any(|d| d.name().unwrap_or_default() == target_name) {
+                                        let _ = tx.send(AudioCommand::SetInputDevice(Some(target_name)));
+                                        break;
+                                    }
+                                }
+                            }
+                        });
                     }
                 }
                 AudioCommand::SetLocalPlayback(enabled) => {
