@@ -458,6 +458,9 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
     }
 
     .modal-titlebar {
@@ -470,7 +473,7 @@
       color: var(--accent-1);
     }
 
-    .modal-body { padding: 16px; max-height: 80vh; overflow-y: auto; }
+    .modal-body { padding: 16px; max-height: 80vh; overflow-y: auto; overflow-x: hidden; }
 
     .modal-header {
       font-size: 11px;
@@ -851,6 +854,9 @@
       border-radius: 8px;
       overflow: hidden;
       box-shadow: 0 16px 48px oklch(0% 0 0 / 0.5);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
     }
 
     .modal-titlebar {
@@ -863,7 +869,7 @@
       color: var(--accent-1);
     }
 
-    .modal-body { padding: 16px; }
+    .modal-body { padding: 16px; max-height: 80vh; overflow-y: auto; overflow-x: hidden; }
 
     .modal-header {
       font-size: 11px;
@@ -1185,4 +1191,243 @@
           </div>
         </div>
 
+        <!-- DSP Modals -->
+        <div id="dspDenoiseModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:300px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Noise Removal</span><button onclick="window.closeDspModal('Denoise')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <div style="display:flex; justify-content:space-between; color:var(--text-3); font-size:11px; margin-bottom:4px;"><span>Strength</span><span id="dspDenoiseVal">1.0</span></div>
+          <input type="range" id="dspDenoiseStrength" min="0" max="1" step="0.05" value="1.0" oninput="document.getElementById('dspDenoiseVal').textContent=this.value; window.triggerMicDspUpdate();" style="width:100%;">
+        </div>
+
+        <div id="dspEqModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:600px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Parametric Equalizer</span><button onclick="window.closeDspModal('Eq')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <canvas id="eqCanvas" style="width:100%; height:250px; border-radius:4px; background:var(--bg-1); border:1px solid var(--border); display:block;"></canvas>
+        </div>
+
+        <div id="dspCompModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:var(--bg-2); border:1px solid var(--border); border-radius:8px; padding:20px; width:550px; z-index:2000; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><span style="font-weight:bold; color:var(--text-1);">Compressor</span><button onclick="window.closeDspModal('Comp')" class="btn" style="padding:2px 8px;">&times;</button></div>
+          <canvas id="compCanvas" style="width:100%; height:180px; border-radius:4px; background:var(--bg-1); border:1px solid var(--border); display:block;"></canvas>
+          <div style="display:flex; gap:10px; margin-top:15px;">
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; color:var(--text-3); font-size:11px;"><span>Ratio</span><span id="dspCompRatioVal">4.0</span></div>
+              <input type="range" id="dspCompRatio" min="1" max="20" step="0.5" value="4.0" oninput="document.getElementById('dspCompRatioVal').textContent=this.value; window.triggerMicDspUpdate();" style="width:100%;">
+            </div>
+          </div>
+        </div>
         
+        <div class="modal-header">Virtual Cable (Output to Discord):</div>
+        <select id="outSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%; margin-bottom: 15px;" onchange="setVirtualOutput(this.value)">
+          <option value="">No Virtual Cable</option>
+        </select>
+        
+        <div style="margin-bottom: 25px; display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="autoStart" onchange="toggleAutoStart(this.checked)"> Start on Boot
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;" title="Mute local audio when playing so Discord screen share doesn't double-play it">
+          <input type="checkbox" id="muteLocal" onchange="toggleMuteLocal(this.checked)"> Mute Local Mic (Discord screenshare mode)
+          </label>
+        </div>
+
+        <div class="modal-header">Global Mute (Stop local/cable output):</div>
+        <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+          <select id="muteReminderSelect" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; font-size:12px; outline:none; width: 100%;" onchange="setMuteReminder(this.value)">
+            <option value="0">No Reminder</option>
+            <option value="1">Remind after 1 minute</option>
+            <option value="10">Remind after 10 minutes</option>
+            <option value="30">Remind after 30 minutes</option>
+          </select>
+          <span id="settingsMutedBadge" style="display:none; color: var(--red-2); font-weight:bold; border: 1px solid var(--red-2); padding: 4px 8px; border-radius: 3px; font-size: 10px;">MUTED</span>
+        </div>
+        <input type="text" id="muteHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+
+        <div class="modal-header">Appearance:</div>
+        <div style="display:flex; gap: 10px; margin-bottom: 15px; align-items: center;">
+          <input type="color" id="themeColor" onchange="setThemeColor(this.value)" value="#5cf0f0" style="background:none; border:none; width:30px; height:30px; cursor:pointer;">
+          <input type="text" id="headerText" autocomplete="off" spellcheck="false" placeholder="BliemBoard (leave empty for ASCII art)" onchange="setHeaderText(this.value)" style="background:var(--bg-2); color:var(--text-1); padding:8px; border:1px solid var(--border); border-radius:4px; font-family:inherit; outline:none; font-size:12px; flex:1;">
+        </div>
+        <div style="display:flex; gap: 10px; margin-bottom: 25px; align-items: center;">
+          <button class="btn" onclick="document.getElementById('logoUpload').click()">Logo</button>
+          <input type="file" id="logoUpload" accept="image/*" onchange="uploadLogo(event)" style="font-size:12px; flex: 1; color: var(--text-2);">
+          <button class="btn" style="color:#ff5555; border-color:rgba(255,85,85,0.3);" onclick="clearLogo()">Remove</button>
+        </div>
+
+        <div class="modal-header">Data & Backup:</div>
+        <div style="display:flex; gap: 10px; margin-bottom: 25px; align-items: center;">
+          <button class="btn" style="flex:1; justify-content: center; gap:6px;" onclick="exportBoard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export Data (.bliem)</button>
+          <button class="btn" style="flex:1; justify-content: center; gap:6px;" onclick="importBoard()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 5 17 10"/><line x1="12" y1="5" x2="12" y2="17"/></svg> Import Data (.bliem)</button>
+        </div>
+
+        <div class="modal-header">UI Visibility:</div>
+        <div style="margin-bottom: 25px; display:flex; flex-direction:column; gap:8px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="hideVisualizerCheckbox" onchange="toggleHideVisualizer(this.checked)"> Hide Audio Visualizer
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="hideMetaCheckbox" onchange="toggleHideMeta(this.checked)"> Hide Status Bar (ready, muted, version)
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); cursor:pointer;">
+          <input type="checkbox" id="stopOnReclickCheckbox" onchange="toggleStopOnReclick(this.checked)"> Stop sound completely if clicked while playing
+          </label>
+        </div>
+
+        <div class="modal-buttons" style="margin-top: 15px;">
+          <button class="btn btn-primary-modal" onclick="closeSettings()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- -- SOUND SETTINGS MODAL -- -->
+  <div id="editOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">SOUND SETTINGS</div>
+      <div class="modal-body">
+        <div class="modal-header">Sound Label:</div>
+        <input type="text" id="editInput" autocomplete="off" spellcheck="false" placeholder="sound_name" style="margin-bottom: 10px;">
+        
+        <div class="modal-header" style="margin-top: 10px;">Category:</div>
+        <div style="position:relative; margin-bottom: 10px;">
+          <input type="text" id="editCategory" autocomplete="off" spellcheck="false" placeholder="e.g. Memes, Music..." style="margin-bottom: 0;">
+          <div id="categoryCustomList" style="display:none; position:absolute; top:100%; left:0; right:0; background:var(--bg-4); border:1px solid var(--border); border-top:none; z-index:100; max-height:150px; overflow-y:auto; border-radius:0 0 4px 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);"></div>
+        </div>
+
+        <div class="modal-header" style="margin-top: 10px;">Individual Volume:</div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+            <input type="range" id="editVolume" min="0" max="100" value="100" oninput="document.getElementById('editVolVal').innerText = this.value + '%'" style="flex: 1;">
+            <span id="editVolVal" style="font-size: 11px; color: var(--text-2); min-width: 35px; text-align:right;">100%</span>
+        </div>
+
+        <div class="modal-header" style="margin-top: 10px;">Image:</div>
+        <button class="btn" style="width: 100%; margin-bottom: 15px; justify-content: center;" onclick="triggerAddImage()">&#128444; Change Image</button>
+
+        <div class="modal-header" style="margin-top: 10px;">Hotkey:</div>
+        <input type="text" id="editHotkey" autocomplete="off" spellcheck="false" placeholder="Click and press keys..." style="margin-bottom: 25px;">
+
+        <div class="modal-buttons" style="justify-content: space-between;">
+          <button class="btn" style="color: #ff5555; border-color: rgba(255,85,85,0.3);" onclick="triggerDeleteSound()">Delete</button>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn" onclick="closeEdit()">Cancel</button>
+            <button class="btn btn-primary-modal" onclick="saveEdit()">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- CONFIRM OVERLAY -- -->
+  <div id="confirmOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">CONFIRM ACTION</div>
+      <div class="modal-body">
+        <div class="modal-header" id="confirmMessage" style="text-align:center; margin-bottom:15px;">Are you sure?</div>
+        <div class="modal-buttons">
+          <button class="btn" onclick="closeConfirm()">Cancel</button>
+          <button class="btn btn-primary-modal" id="confirmYesBtn">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -- MIC PERMISSION OVERLAY -- -->
+  <div id="micOverlay" class="edit-overlay">
+    <div class="edit-modal">
+      <div class="modal-titlebar">MICROPHONE ACCESS</div>
+      <div class="modal-body">
+        <div class="modal-header" style="text-align:center; margin-bottom:15px; font-weight: normal; font-size: 14px;">
+          BliemBoard needs microphone access for the audio visualizer.<br><br>
+          <span style="color:var(--text-5); font-size: 12px;">(Windows might ask you to confirm again after this)</span>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn" onclick="closeMicOverlay()">Cancel</button>
+          <button class="btn btn-primary-modal" id="micAllowBtn">Zulassen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- -- DROP OVERLAY (outside container, fixed full-screen) -- -->
+<div id="drop-overlay">
+  <div class="drop-label">
+    DROP AUDIO FILES
+    <small>mp3 &bull; wav &bull; ogg &bull; flac &bull; aac &bull; mp4</small>
+  </div>
+</div>
+
+<!-- -- AUDIO EDITOR OVERLAY -- -->
+<div id="audioEditorOverlay" class="edit-overlay" style="display:none;">
+  <div class="edit-modal" style="width: min(700px, 96vw); max-width: 700px;">
+    <div class="modal-titlebar">
+      &#9986; AUDIO EDITOR
+      <span id="audioEditorName" style="font-weight:normal; font-size:11px; opacity:0.6; margin-left:8px;"></span>
+    </div>
+    <div class="modal-body" style="gap: 12px;">
+      <!-- Waveform canvas -->
+      <div style="position:relative; background:var(--bg-3); border-radius:6px; overflow:hidden; border:1px solid var(--border);">
+        <canvas id="editorWaveform" style="display:block; width:100%; height:120px; cursor:crosshair;"></canvas>
+        <!-- Start handle -->
+        <div id="editorHandleStart" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--accent-1); cursor:ew-resize; left:0%;
+          box-shadow: 2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; left:3px; background:var(--accent-1);
+            color:#000; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">&#9654; START</div>
+        </div>
+        <!-- End handle -->
+        <div id="editorHandleEnd" style="
+          position:absolute; top:0; bottom:0; width:3px;
+          background:var(--red-2); cursor:ew-resize; right:0%; left:unset;
+          box-shadow: -2px 0 8px rgba(0,0,0,0.5);">
+          <div style="position:absolute; top:4px; right:3px; background:var(--red-2);
+            color:#fff; font-size:9px; font-weight:bold; padding:1px 4px; border-radius:2px;
+            white-space:nowrap; pointer-events:none;">END &#9664;</div>
+        </div>
+        <!-- Playhead -->
+        <div id="editorPlayhead" style="
+          position:absolute; top:0; bottom:0; width:2px;
+          background:rgba(255,255,255,0.6); pointer-events:none; display:none; left:0%;"></div>
+        <!-- Dim region outside selection -->
+        <div id="editorDimLeft" style="
+          position:absolute; top:0; bottom:0; left:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+        <div id="editorDimRight" style="
+          position:absolute; top:0; bottom:0; right:0; background:rgba(0,0,0,0.45); pointer-events:none; width:0%;"></div>
+      </div>
+
+      <!-- Time labels -->
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-2); padding:0 2px;">
+        <span>Start: <b id="editorStartLabel" style="color:var(--accent-1);">0.00s</b></span>
+        <span>Duration: <b id="editorDurLabel" style="color:var(--text-1);">&mdash;</b></span>
+        <span>End: <b id="editorEndLabel" style="color:var(--red-2);">0.00s</b></span>
+      </div>
+
+
+
+      <!-- Loading / error state -->
+      <div id="editorStatus" style="font-size:12px; color:var(--text-2); text-align:center; min-height:16px;"></div>
+
+      <!-- Buttons -->
+      <div class="modal-buttons" style="margin-top:4px;">
+        <button class="btn" onclick="window.closeAudioEditor()">Cancel</button>
+        <button class="btn" id="editorPreviewBtn" onclick="window.previewAudioTrim()" style="gap:4px;">
+          &#9654; Preview
+        </button>
+        <button class="btn btn-primary-modal" id="editorSaveBtn" onclick="window.saveAudioTrim()">
+          &#9986; Save Trim
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  #audioEditorOverlay.show { display:flex !important; }
+  #editorWaveform { image-rendering: pixelated; }
+</style>
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>
+

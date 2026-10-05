@@ -1,3 +1,21 @@
+
+const origLog = console.log;
+const origErr = console.error;
+window.addEventListener('error', e => {
+  fetch('http://127.0.0.1:9999/log?type=error&msg=' + encodeURIComponent(e.message + ' at ' + e.filename + ':' + e.lineno)).catch(()=>origLog.apply(console,['fetch err']));
+});
+window.addEventListener('unhandledrejection', e => {
+  fetch('http://127.0.0.1:9999/log?type=unhandledrejection&msg=' + encodeURIComponent(e.reason)).catch(()=>origLog.apply(console,['fetch err']));
+});
+console.log = function(...args) {
+  fetch('http://127.0.0.1:9999/log?type=log&msg=' + encodeURIComponent(args.join(' '))).catch(()=>{});
+  origLog.apply(console, args);
+};
+console.error = function(...args) {
+  fetch('http://127.0.0.1:9999/log?type=error&msg=' + encodeURIComponent(args.join(' '))).catch(()=>{});
+  origErr.apply(console, args);
+};
+
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
@@ -159,9 +177,9 @@ function restoreCustomizations() {
     updateHeaderDisplay();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    restoreCustomizations();\n    initMicDsp();
-});
+
+
+
 
 /* ═══════════════════════════════════════════════════════════════
    REAL AUDIO VISUALIZER
@@ -739,8 +757,11 @@ document.addEventListener('mouseup', async (e) => {
 });
 
 async function render() {
+  console.log("IN RENDER");
   try {
     const sounds = await invoke('get_sounds');
+    console.log("GOT SOUNDS", sounds.length);
+    setTimeout(() => { fetch('http://127.0.0.1:9999/log?type=log&msg=SB_INNERHTML:' + encodeURIComponent(document.getElementById('soundboard').innerHTML.slice(0, 400))) }, 2000);
     const sb = document.getElementById('soundboard');
     const tabsContainer = document.getElementById('categoryTabs');
     sb.innerHTML = '';
@@ -1120,8 +1141,12 @@ window.toggleAutoStart = async function(checked) {
   }
 };
 
+
+console.log('REACHED IIFE');
 (async () => {
   try {
+    try { restoreCustomizations(); } catch(e) { console.error('restoreCustomizations error:', e); }
+    try { ['dspDenoiseModal', 'dspEqModal', 'dspCompModal'].forEach(id => { const el = document.getElementById(id); if (el) document.body.appendChild(el); }); } catch(e) { console.error('modal move error:', e); }
     await render();
 
     // Populate virtual output list
@@ -1304,7 +1329,7 @@ window.toggleAutoStart = async function(checked) {
   // --- DSP EFFECTS ---
   let dspPreviewWav = null;
 
-  function initMicDsp() {
+  window.initMicDsp = function() {
     window.eqVisualizer = new EqVisualizer('eqCanvas', () => window.triggerMicDspUpdate());
     window.compVisualizer = new CompVisualizer('compCanvas', () => window.triggerMicDspUpdate());
     const saved = localStorage.getItem('micDspChain');

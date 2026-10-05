@@ -340,27 +340,25 @@ unsafe fn run_loopback_thread(
         None => { dlog!("IAudioClient slot empty (timeout?)"); return; }
     };
 
-    let sample_rate: u32 = 44100;
-    let channels: u16 = 2;
-    let bits: u16 = 16;
-
-    let wfx = WAVEFORMATEX {
-        wFormatTag: 1, // WAVE_FORMAT_PCM
-        nChannels: channels,
-        nSamplesPerSec: sample_rate,
-        nAvgBytesPerSec: sample_rate * (channels as u32) * (bits as u32 / 8),
-        nBlockAlign: channels * (bits / 8),
-        wBitsPerSample: bits,
-        cbSize: 0,
+    let mut pwfx = match unsafe { audio_client.GetMixFormat() } {
+        Ok(p) => p,
+        Err(e) => {
+            dlog!("GetMixFormat failed: {:?}", e);
+            return;
+        }
     };
-    dlog!("Using fixed format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
+    let wfx = unsafe { *pwfx };
+    let sample_rate = wfx.nSamplesPerSec;
+    let channels = wfx.nChannels;
+    let bits = wfx.wBitsPerSample;
+    dlog!("Using mix format: {} Hz, {} ch, {} bits", sample_rate, channels, bits);
 
     if let Err(e) = audio_client.Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
         200_000,
         0,
-        &wfx,
+        pwfx,
         None,
     ) {
         dlog!("Initialize failed: {:?}", e);
@@ -414,8 +412,13 @@ unsafe fn run_loopback_thread(
             let samples: Vec<f32> = if (flags & 2) != 0 || p_data.is_null() {
                 vec![0f32; total]
             } else {
-                // Fixed format is 16-bit PCM, no volume scaling (already applied by Windows mix)
-                std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0).collect()
+                if bits == 32 {
+                    std::slice::from_raw_parts(p_data as *const f32, total).to_vec()
+                } else if bits == 16 {
+                    std::slice::from_raw_parts(p_data as *const i16, total).iter().map(|&s| s as f32 / 32768.0).collect()
+                } else {
+                    vec![0f32; total]
+                }
             };
             
             let _ = capture_client.ReleaseBuffer(num_frames);
